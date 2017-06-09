@@ -436,7 +436,7 @@ AUCLog1 <- performance(pred1, measure = 'auc')@y.values[[1]]
 AUCLog1
 ```
 
-    ## [1] 0.7497481
+    ## [1] 0.756791
 
 Esse não é um resultado ruim, mas vamos ver se podemos fazer melhor com um método diferente.
 
@@ -476,7 +476,7 @@ AUCTree <- performance(pred3, measure = 'auc')@y.values[[1]]
 AUCTree
 ```
 
-    ## [1] 0.6980508
+    ## [1] 0.7277718
 
 O resultado foi pior do que o anterior. E ambos não são resultados satisfatórios, dada a complexidade do nosso modelo de árvore, então, novamente, temos que nos perguntar se não estamos melhor usando o modelo de Regressão Logística mais simples do primeiro modelo.
 
@@ -506,7 +506,7 @@ AUCRF <- performance(pred4, measure = 'auc')@y.values[[1]]
 AUCRF
 ```
 
-    ## [1] 0.7396471
+    ## [1] 0.7473306
 
 Com o esforço extra, ainda assim não obtemos um resultado um tanto melhorado. O modelo de Regressão logística é o melhor desempenho até o momento.
 
@@ -897,7 +897,7 @@ logLik(modelo.completo)
 logLik(LogisticModel.1)
 ```
 
-    ## 'log Lik.' -813.4712 (df=14)
+    ## 'log Lik.' -808.3049 (df=14)
 
 ``` r
 logLik(LogisticModel.3)
@@ -917,7 +917,7 @@ extractAIC(modelo.completo)
 extractAIC(LogisticModel.1)
 ```
 
-    ## [1]   14.000 1654.942
+    ## [1]   14.00 1644.61
 
 ``` r
 extractAIC(LogisticModel.3)
@@ -947,8 +947,8 @@ anova(LogisticModel.1,LogisticModel.3)
     ##     serasa_commercial_debts + serasa_protests + marital_status + 
     ##     monthly_payment + purpose + education_level
     ##   Resid. Df Resid. Dev Df Deviance
-    ## 1      1234     732.94            
-    ## 2      1234    1370.45  0  -637.51
+    ## 1      1234     724.61            
+    ## 2      1234    1370.45  0  -645.84
 
 Existem diferenças entre os modelos, então ficamos com aquele com mais parâmetros, o modelo 1, o mais complexo, não podemos abandonar ele pelo mais simples, ja que ele explica muita coisa que o modelo 2 mais simples não deu conta de explicar, mas não podemos esquecer que:
 
@@ -1129,15 +1129,15 @@ coefficients(LogisticModel.1) * 20/log(2)
 ```
 
     ##              (Intercept)                      age           monthly_income 
-    ##               -37.006431                26.685252              -248.968860 
+    ##               -30.855831                12.941396              -453.999558 
     ##         collateral_value              loan_amount   collateral_debt_amount 
-    ##                 4.105753                32.211006            -59920.312608 
+    ##                 7.579405                28.722964            -55273.929384 
     ##       serasa_restriction serasa_dishonored_checks     serasa_expired_debts 
-    ##                -9.945645              -416.592456              -381.828218 
+    ##               -16.993701              -408.941390              -436.137684 
     ##     serasa_banking_debts  serasa_commercial_debts          serasa_protests 
-    ##               -34.925778               -23.552788               -19.620253 
+    ##               -63.321149               -16.162850                 5.708123 
     ##          monthly_payment                  purpose 
-    ##                87.489188                 3.887708
+    ##                66.210650                 1.173564
 
 Uma nova abordagem de um novo modelo
 ------------------------------------
@@ -1284,7 +1284,7 @@ eval_model(prediction, credit[,c(1:5,12:14,16)])
     ## Error rate reduction (vs. base rate):
     ## -Inf (p-value = 1)
 
-Sim, esse modelo com 98,4% é o modelo ideal para classificação de crédito com garantial de automóvel. Vale lembrar que a cada novo dado o modelo precisa ser treinado novamente par uma melhor previsão.
+Sim, esse modelo com 98,4% é o modelo ideal para classificação de crédito com garantia de automóvel. Vale lembrar que a cada novo dado o modelo precisa ser treinado novamente par uma melhor previsão.
 
 Conclusão
 ---------

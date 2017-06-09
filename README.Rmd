@@ -650,7 +650,7 @@ prediction <- predict(modelOne, credit[,c(1:5,12:14,16)])
 eval_model(prediction, credit[,c(1:5,12:14,16)])
 ```
 
-Sim, esse modelo com 98,4% é o modelo ideal para classificação de crédito com garantial de automóvel. Vale lembrar que a cada novo dado o modelo precisa ser treinado novamente par uma melhor previsão.
+Sim, esse modelo com 98,4% é o modelo ideal para classificação de crédito com garantia de automóvel. Vale lembrar que a cada novo dado o modelo precisa ser treinado novamente par uma melhor previsão.
 
 ## Conclusão
 
