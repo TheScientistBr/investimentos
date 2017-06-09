@@ -654,11 +654,11 @@ Sim, esse modelo com 98,4% é o modelo ideal para classificação de crédito co
 
 ## Conclusão
 
-Usamos quatro modelos com os seguintes desempenhos:
+Usamos quatro modelos, e uma comparação entre eles, com os seguintes desempenhos:
 
 ```{r echo=FALSE}
 library(knitr)
-myTable <- data.frame(Modelo = c("Regressão Logística", "Árvore de Regressão", "Floresta aleatória", "Comparação GLM x RF", "One level decision trees"), Desemepmnho = c(0.75,0.71, 0.74, 0.65, 0.98))
+myTable <- data.frame(Modelo = c("Regressão Logística", "Árvore de Regressão", "Floresta aleatória", "Comparação GLM x RF", "One level decision trees"), Desempenho = c(0.75,0.71, 0.74, 0.65, 0.98))
 kable(myTable)
 ```
 

@@ -412,6 +412,8 @@ LogisticModel.1 <- glm(sent_to_analysis ~ . -education_level -marital_status,
                        family = poisson(link = "log"),data = credit[i_calibration1, ])
 ```
 
+    ## Warning: glm.fit: fitted rates numerically 0 occurred
+
 Com isso, podemos avançar para ajustar o modelo que acabamos de criar para o conjunto de testes, i\_test1, e nos preparar para fazer nossa primeira previsão.
 
 ``` r
@@ -436,7 +438,7 @@ AUCLog1 <- performance(pred1, measure = 'auc')@y.values[[1]]
 AUCLog1
 ```
 
-    ## [1] 0.756791
+    ## [1] 0.7469674
 
 Esse não é um resultado ruim, mas vamos ver se podemos fazer melhor com um método diferente.
 
@@ -476,7 +478,7 @@ AUCTree <- performance(pred3, measure = 'auc')@y.values[[1]]
 AUCTree
 ```
 
-    ## [1] 0.7277718
+    ## [1] 0.7121979
 
 O resultado foi pior do que o anterior. E ambos não são resultados satisfatórios, dada a complexidade do nosso modelo de árvore, então, novamente, temos que nos perguntar se não estamos melhor usando o modelo de Regressão Logística mais simples do primeiro modelo.
 
@@ -506,7 +508,7 @@ AUCRF <- performance(pred4, measure = 'auc')@y.values[[1]]
 AUCRF
 ```
 
-    ## [1] 0.7473306
+    ## [1] 0.759993
 
 Com o esforço extra, ainda assim não obtemos um resultado um tanto melhorado. O modelo de Regressão logística é o melhor desempenho até o momento.
 
@@ -897,7 +899,7 @@ logLik(modelo.completo)
 logLik(LogisticModel.1)
 ```
 
-    ## 'log Lik.' -808.3049 (df=14)
+    ## 'log Lik.' -819.4182 (df=14)
 
 ``` r
 logLik(LogisticModel.3)
@@ -917,7 +919,7 @@ extractAIC(modelo.completo)
 extractAIC(LogisticModel.1)
 ```
 
-    ## [1]   14.00 1644.61
+    ## [1]   14.000 1666.836
 
 ``` r
 extractAIC(LogisticModel.3)
@@ -947,8 +949,8 @@ anova(LogisticModel.1,LogisticModel.3)
     ##     serasa_commercial_debts + serasa_protests + marital_status + 
     ##     monthly_payment + purpose + education_level
     ##   Resid. Df Resid. Dev Df Deviance
-    ## 1      1234     724.61            
-    ## 2      1234    1370.45  0  -645.84
+    ## 1      1234     752.84            
+    ## 2      1234    1370.45  0  -617.61
 
 Existem diferenças entre os modelos, então ficamos com aquele com mais parâmetros, o modelo 1, o mais complexo, não podemos abandonar ele pelo mais simples, ja que ele explica muita coisa que o modelo 2 mais simples não deu conta de explicar, mas não podemos esquecer que:
 
@@ -1129,15 +1131,15 @@ coefficients(LogisticModel.1) * 20/log(2)
 ```
 
     ##              (Intercept)                      age           monthly_income 
-    ##               -30.855831                12.941396              -453.999558 
+    ##               -30.254533                21.937516               -51.120953 
     ##         collateral_value              loan_amount   collateral_debt_amount 
-    ##                 7.579405                28.722964            -55273.929384 
+    ##                19.870600               -56.046783            -44326.605163 
     ##       serasa_restriction serasa_dishonored_checks     serasa_expired_debts 
-    ##               -16.993701              -408.941390              -436.137684 
+    ##                -8.946798              -425.783275                -2.510972 
     ##     serasa_banking_debts  serasa_commercial_debts          serasa_protests 
-    ##               -63.321149               -16.162850                 5.708123 
+    ##              -466.969441               -17.054072                -4.522727 
     ##          monthly_payment                  purpose 
-    ##                66.210650                 1.173564
+    ##                95.167582                -2.502050
 
 Uma nova abordagem de um novo modelo
 ------------------------------------
@@ -1289,15 +1291,15 @@ Sim, esse modelo com 98,4% é o modelo ideal para classificação de crédito co
 Conclusão
 ---------
 
-Usamos quatro modelos com os seguintes desempenhos:
+Usamos quatro modelos, e uma comparação entre eles, com os seguintes desempenhos:
 
-| Modelo                   |  Desemepmnho|
-|:-------------------------|------------:|
-| Regressão Logística      |         0.75|
-| Árvore de Regressão      |         0.71|
-| Floresta aleatória       |         0.74|
-| Comparação GLM x RF      |         0.65|
-| One level decision trees |         0.98|
+| Modelo                   |  Desempenho|
+|:-------------------------|-----------:|
+| Regressão Logística      |        0.75|
+| Árvore de Regressão      |        0.71|
+| Floresta aleatória       |        0.74|
+| Comparação GLM x RF      |        0.65|
+| One level decision trees |        0.98|
 
 Concluimos que o algoritmo `One level decision trees` é o melhor.
 
