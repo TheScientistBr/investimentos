@@ -1,0 +1,34 @@
+bi_lead_id,Chave única de uma solicitação de cliente
+age,Idade do cliente 
+monthly_income,Renda mensal informada pelo cliente no momento do cadastro
+collateral_value,Valor do automóvel que será dado em garantia
+loan_amount,Valor solicitado pelo cliente para empréstimo
+city,Cidade do cliente
+state,Estado do cliente
+collateral_debt_amount,Valor que o automovel do cliente tem de dívida (ex. Valor que ainda está financiado)
+serasa_restriction,Indica se o cliente possui alguma pendência no serasa (Caso seja NA quer dizer que não houve consulta do serasa para o cliente)
+serasa_dishonored_checks,Indica se o cliente possui cheques sem fundo (dado da consulta do serasa)
+serasa_expired_debts,Indica se o cliente possui dívidas vencidas (dado da consulta do serasa)
+serasa_banking_debts,Indica se o cliente possui divídas bancárias (dado da consulta do serasa)
+serasa_commercial_debts,Indica se o cliente possui dividas comerciais (dado da consulta do serasa)
+serasa_protests,Indica se o cliente possui protestos (dado da consulta do serasa)
+marital_status,Estado civil 
+cpf_restriction,Restrição no cpf (informado pelo cliente)
+loan_term,Prazo do empréstimo
+monthly_payment,Pagamento mensal do empréstimo
+purpose,Motivo pelo qual o cliente deseja o empréstimo
+auto_brand,Marca do carro
+auto_model,Modelo do carro
+auto_model_year,Ano do carro
+covered_lead,Lead pré-aprovado (apenas leads pré-aprovados são atendidos)
+form_completed,Ficha cadastral completa pelo cliente
+sent_to_analysis,Enviado para análise de crédito
+discard_reason,Motivo de descarte de um lead (leads pré-aprovados podem ser descartados em várias etapas do processo)
+channel,Canal de entrada do lead
+created_at_safra,Data de criação do lead
+zip_code,CEP do cliente
+landing_page,Página inicial que o cliente acessou no site
+landing_page_product,Produto da página inicial do cliente
+gender,Gênero do cliente
+education_level,Grau de instrução do cliente
+utm_term,"Tipo de dispositivo do cliente (c = computer, m = mobile, t = tablet)"

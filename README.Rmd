@@ -1,0 +1,652 @@
+---
+title: "Empréstimo com garantia de automóvel"
+subtitle: "Normalizado e com dados das restrições"
+output:
+#  html_document
+  md_document:
+    variant: markdown_github
+---
+
+
+## Introdução
+
+O objetivo deste projeto é dizer qual a probabilidade de um cliente passar com sucesso para análise de crédito dado que ele foi pré-aprovado para o empréstimo com garantia de automóvel.
+
+Neste estudo de caso, vamos tentar discutir algumas maneiras de prever a chance de um cliente específico, que quer candidatar-se a um empréstimo, será padrão em seus pagamentos (ou não).
+
+Em primeiro lugar, "prever" algo é uma expressão realmente estranha, não é? É provável que as pessoas comuns liguem a "previsão" com o relatório meteorológico diário - e todos sabemos que esse tipo de previsão não é confiável o tempo todo.
+
+Então, por que fazer o esforço tentar olhar para o futuro para estimar a probabilidade de inadimplência? Por que os bancos simplesmente não dão a alguém que precise de algum dinheiro sabendo que eles não podem fazer nada para reduzir os mal devedores?
+
+É claro que não é assim que isso funciona - a maneira mais intuitiva (e ainda muito popular) é que um oficial de empréstimo qualificado e experiente faça o melhor para decidir se um candidato é aprovado - ou não.
+
+
+### Carregando o Dataset
+
+A carga do dataset no formato `csv` deve passar por uma transformação inicial quanto a coluna `bi_lead_id` simplesmente por simples inconsistência quanto a coerção. Transformamos em caractere.
+
+```{r read_dataset, warning=FALSE,message=FALSE}
+df <- read.csv("data/auto_refi_loan_data.csv",encoding = "UTF-8", stringsAsFactors = FALSE) 
+head(df[,1:6])
+```
+
+**Estrutura do Dataset**
+
+A coluna de descrição foi truncada para melhor visualização
+
+```{r, message=FALSE, warning=FALSE}
+structure <- read.csv("data/dataset_description.csv", header = FALSE, col.names = c("coluna","descricao"),encoding = "UTF-8")
+structure$descricao <- strtrim(structure$descricao,width = 45)
+structure
+```
+
+
+## Limpeza e transformação dos dados
+
+Algumas ações são necessárias, como por exemplo, a limpeza e transformação de algumas variáveis categóricas para inteiros ou numéricas de ponto flutuante. Também excluimos todas as observações cujo valor da variáel `covered_lead` seja igual a zero e os formulários incompletos.
+
+```{r, message=FALSE, warning=FALSE}
+library(gmodels)
+df$bi_lead_id <- as.character(df$bi_lead_id) # adequando a variável (transofrmação)
+ndf <- subset(df,covered_lead != "0")
+ndf <- subset(ndf,form_completed != "0")
+## trocando valores não disponíveis por zero nas colunas 
+## collateral_debt_amount e monthly_payment
+ndf$collateral_debt_amount[is.na(ndf$collateral_debt_amount)] <- 0 
+ndf$monthly_payment[is.na(ndf$monthly_payment)] <- 0 
+```
+
+
+A coluna `purpose` é uma string com muitas váriações, o ideal é que o dado tivesse sido padronizado em sua coleta, já que isso aconteceu via portal na Internet. Vamos tentar melhorar com alguns ajustes. Vamos olhar um pequeno exemplo:
+
+```{r, message=FALSE, warning=FALSE}
+ndf$purpose[20:30]
+```
+*quitar dividas* é um bom exemplo, vamos retirar os espaços duplos ou maiores, deixar todo o texto em caixa baixa e remover toda a pontuação do texto. Vamos remover as acentuações, já que alguns clientes colocam e outros não.
+
+
+```{r, message=FALSE, warning=FALSE}
+ndf$purpose <- factor(tolower(ndf$purpose))
+ndf$purpose <- gsub("^ *|(?<= ) | *$", "", ndf$purpose, perl = TRUE)
+rm_accent <- function(str,pattern="all") {
+  # rm.accent - REMOVE ACENTOS DE PALAVRAS
+  # Função que tira todos os acentos e pontuações de um vetor de strings.
+  # Parâmetros:
+  # str - vetor de strings que terão seus acentos retirados.
+  # patterns - vetor de strings com um ou mais elementos indicando quais acentos deverão ser retirados.
+  #            Para indicar quais acentos deverão ser retirados, um vetor com os símbolos deverão ser passados.
+  #            Exemplo: pattern = c("´", "^") retirará os acentos agudos e circunflexos apenas.
+  #            Outras palavras aceitas: "all" (retira todos os acentos, que são "´", "`", "^", "~", "¨", "ç")
+  if(!is.character(str))
+    str <- as.character(str)
+
+  pattern <- unique(pattern)
+
+  if(any(pattern=="Ç"))
+    pattern[pattern=="Ç"] <- "ç"
+
+  symbols <- c(
+    acute = "áéíóúÁÉÍÓÚýÝ",
+    grave = "àèìòùÀÈÌÒÙ",
+    circunflex = "âêîôûÂÊÎÔÛ",
+    tilde = "ãõÃÕñÑ",
+    umlaut = "äëïöüÄËÏÖÜÿ",
+    cedil = "çÇ"
+  )
+
+  nudeSymbols <- c(
+    acute = "aeiouAEIOUyY",
+    grave = "aeiouAEIOU",
+    circunflex = "aeiouAEIOU",
+    tilde = "aoAOnN",
+    umlaut = "aeiouAEIOUy",
+    cedil = "cC"
+  )
+
+  accentTypes <- c("´","`","^","~","¨","ç")
+
+  if(any(c("all","al","a","todos","t","to","tod","todo")%in%pattern)) # opcao retirar todos
+    return(chartr(paste(symbols, collapse=""), paste(nudeSymbols, collapse=""), str))
+
+  for(i in which(accentTypes%in%pattern))
+    str <- chartr(symbols[i],nudeSymbols[i], str)
+
+  return(str)
+}
+
+ndf$purpose <- rm_accent(ndf$purpose)
+ndf$purpose[20:30]
+```
+
+Agora podemos transformar essa coluna em numérica devido aos seus nívels (fatores).
+O mesmo para outras variáveis.
+
+```{r warning=FALSE, message=FALSE}
+ndf$purpose <- as.factor(ndf$purpose)
+ndf$purpose <- unclass(ndf$purpose)
+ndf$education_level <- as.factor(ndf$education_level)
+ndf$education_level <- unclass(ndf$education_level)
+
+# transformando marital_status
+ndf$marital_status <- as.integer(ndf$marital_status)
+
+```
+
+Vamos então retirar algumas colunas para um novo dataset para o processamento, como por exemplo a cidade onde o cliente mora, esses valores não interferem no resultado final.
+
+```{r, message=FALSE, warning=FALSE}
+credit <- ndf
+credit[,c(1,2,7,8,17,18,21:25,27:33,35,36)] <- NULL
+dim(credit)[1]
+remove(ndf)
+```
+
+```{r, message=FALSE, warning=FALSE}
+summary(credit[,c(1:5,13,14)])
+```
+
+Nesta fase vamos apenas entender se existe valores do tipo outliers. Não vamos avaliar as medidas de tendência central da coluna `sent_to_analysis`. Observando os valores acima é fácil perceber que alguns clientes digitaram informações aparentemente inconsistentes, como por exemplo, o `monthly_payment`. Valores zero e outros muito acima da média, o que podemos considerar outliers. O mesmo vale para a idade. O mesmo ocorre com `loan_term`, vamos retirar esses valores faltantes.
+
+**Normalizando as variáveis**
+
+A solução abaixo permite escalar apenas nomes de variáveis específicas, preservando outras variáveis inalteradas (e os nomes das variáveis podem ser gerados dinamicamente), mas optamos aqui por seu indice específico.
+
+```{r message=FALSE, warning=FALSE}
+standValue <- function(x){(x-min(x))/(max(x)-min(x))}
+credit$monthly_income <- standValue(credit$monthly_income)
+credit$collateral_value <- standValue(credit$collateral_value)
+credit$loan_amount <- standValue(credit$loan_amount)
+credit$collateral_debt_amount <- standValue(credit$collateral_debt_amount)
+credit$monthly_payment <- standValue(credit$monthly_payment)
+credit$purpose <- standValue(credit$purpose)
+credit$age <- standValue(credit$age)
+credit$education_level <- standValue(credit$education_level)
+credit$marital_status <- standValue(credit$marital_status)
+
+summary(credit[,c(1:5,13,14)])
+```
+
+Agora com os dados normalizados passamos para a próxima fase.
+
+### Fase exploratória
+
+Agora vamos identificar os clientes que já foram enviados para análise de crédito. Esses clientes serão usados para testar o modelo.
+
+```{r, message=FALSE, warning=FALSE}
+dim(subset(credit,credit$sent_to_analysis > 0))[1]
+```
+
+
+Observa-se que apenas 4172 clientes que não tem restrições no Serasa, sendo que desses 1502 ainda não foram enviados para a análise de crédito.
+
+### Aprimorando a limpeza e tratamento dos dados
+
+Registros sem valores de Pagamento mensal do empréstimo são retirados.
+
+**monthly_payment**
+
+```{r, message=FALSE, warning=FALSE}
+
+head(credit[order(credit$monthly_payment,decreasing = TRUE),c(1:4)])
+credit <- subset(credit,credit$monthly_payment != 0)
+```
+
+```{r, message=FALSE, warning=FALSE}
+head(credit[order(credit$collateral_value,decreasing = TRUE),c(1:4)])
+
+```
+
+Os valores acima ordenados por `collateral_value` mostram que o valor máximo é um outlier. o gráfico de dispersão confirma essa suspeita. Devemos observa que o segundo item da lista foi enviado para análise de crédito, então não podemos considerá-lo como outlier.
+
+
+Comparando todas as variáveis com e sem os outliers
+
+```{r, message=FALSE, warning=FALSE}
+boxplot(credit[,c(1:5,13:14)])
+boxplot(credit[,c(1:5,13:14)],outline = FALSE)
+```
+
+
+
+```{r, message=FALSE, warning=FALSE}
+par(mfrow = c(1,5))
+plot(credit$age, ylab = structure[2,2], xlab = "Clientes")
+plot(credit$collateral_value, ylab = structure[4,2], xlab = "Clientes")
+plot(credit$collateral_debt_amount, ylab = structure[8,2], xlab = "Clientes")
+plot(credit$monthly_payment, ylab = structure[18,2], xlab = "Clientes")
+plot(credit$monthly_income, ylab = structure[3,2], xlab = "Clientes")
+```
+
+Apesar dos valores estarem longe dos demais, há coerência entre `collateral_value`e `monthly_income`, pois os valores são muito distante dos demais.
+
+Vamos então retirar todos os outliers para verificar o seu comportamento, mas antes vamos fazer uma cópia dos nossos dados.
+
+
+```{r, message=FALSE, warning=FALSE}
+## Função para remover outliers
+remove_outliers <- function(x, na.rm = TRUE, ...) {
+  qnt <- quantile(x, probs=c(.25, .75), na.rm = na.rm, ...)
+  H <- 1.5 * IQR(x, na.rm = na.rm)
+  y <- x
+  y[x < (qnt[1] - H)] <- NA
+  y[x > (qnt[2] + H)] <- NA
+  y
+}
+
+credit2 <- credit
+credit$collateral_value <- remove_outliers(credit$collateral_value)
+credit$collateral_debt_amount <- remove_outliers(credit$collateral_debt_amount)
+credit$monthly_payment <- remove_outliers(credit$monthly_payment)
+credit$monthly_income <- remove_outliers(credit$monthly_income)
+
+par(mfrow = c(1,5))
+plot(credit$age, ylab = structure[2,2], xlab = "Clientes")
+plot(credit$collateral_value, ylab = structure[4,2], xlab = "Clientes")
+plot(credit$collateral_debt_amount, ylab = structure[8,2], xlab = "Clientes")
+plot(credit$monthly_payment, ylab = structure[18,2], xlab = "Clientes")
+plot(credit$monthly_income, ylab = structure[3,2], xlab = "Clientes")
+credit <- credit2
+remove(credit2)
+
+```
+
+Agora temos uma dispersão sem outliers, mas isso é apenas para demonstrar, pois não vamos retirar esses valores de nosso modelo.
+
+
+```{r, message=FALSE, warning=FALSE}
+head(credit[order(credit$monthly_income,decreasing = TRUE),c(1:4)],10)
+```
+
+O terceiro item da tabela acima já enviado para análise, então não vamos considerar esses elementos distantes como outliers.
+
+Por último, os valores ausentes e zerados de `collateral_debt_amount` devem ser trocados por zero, pois o carro é o bem que será dado como garantias do emprestimo e esse valor é a dívida do automóvel.
+
+```{r, message=FALSE, warning=FALSE}
+credit[is.na(credit)] <- 0
+```
+
+
+Agora temos nosso banco de dados e nós sabemos como parece. 
+
+## Método Um: Regressão Logística
+
+O primeiro passo é criar nosso conjunto de dados de treinamento e nosso conjunto de dados de teste. O conjunto de teste é usado para avaliar a precisão do modelo.
+
+Vamos criar vários modelos, por isso é necessário dar-lhes designações numéricas (1, 2, 3, etc.). Podemos quebrar os conjuntos de dados em todos os tamanhos que desejamos, até 50-50, mas aqui usamos uma divisão de um terço e dois terços, pois é o mais recomendado pela literatura.
+
+Nesta fase, realizaremos uma regressão logística usando a função glm(). Começamos com o conjunto de práticas, i_calibration1. Aqui, seremos seletivos com as variáveis que usamos no modelo. Vamos mudar isso um pouco, mas, por enquanto, usaremos apenas cinco para determinar o valor da credibilidade.
+
+**OBS:** retiramos do modelo as variáveis `education_level` e `marital_status`, essas variáveis deixam o modelo instável e *uma predição a partir de um ajuste `rank-deficient` pode ser enganoso*.
+
+```{r GLM create_test, message=FALSE}
+i_test1 <- sort(sample(1:nrow(credit), size = dim(credit)[1]*.7))
+
+i_calibration1 <- (1:nrow(credit))[-i_test1]
+set.seed(1)
+LogisticModel.1 <- glm(sent_to_analysis ~ . -education_level -marital_status, 
+                       family = poisson(link = "log"),data = credit[i_calibration1, ])
+```
+        
+Com isso, podemos avançar para ajustar o modelo que acabamos de criar para o conjunto de testes, i_test1, e nos preparar para fazer nossa primeira previsão.       
+        
+```{r fitGLM, create_test, message=FALSE}
+fitLog1 <- predict(LogisticModel.1, type = 'response', newdata = credit[i_test1, ])
+```
+
+Nós montamos nosso modelo. Agora, usaremos o pacote ROCR para criar previsões e medir o desempenho em termos de área sob a curva (AUC). Quanto maior a medida da AUC, melhor será o nosso modelo.
+
+```{r, message=FALSE, warning=FALSE}
+library(ROCR)
+pred1 <- prediction(fitLog1, credit$sent_to_analysis[i_test1])
+perf1 <- performance(pred1, 'tpr', 'fpr')
+plot(perf1,colorize=TRUE,print.cutoffs.at=seq(0,1,by=0.1), text.adj=c(-0.2,1.7))
+```
+
+E iremos envolver esta parte ao encontrar a AUC.
+
+```{r, message=FALSE, warning=FALSE}
+AUCLog1 <- performance(pred1, measure = 'auc')@y.values[[1]]
+AUCLog1
+```
+
+Esse não é um resultado ruim, mas vamos ver se podemos fazer melhor com um método diferente.
+
+
+## Método dois: árvore de regressão
+
+Em seguida, vamos tentar analisar os dados usando uma abordagem de árvore de regressão. Grande parte do nosso código é semelhante ao que foi usado nos modelos de logística acima, mas precisamos fazer alguns ajustes.
+
+Observe novamente que estamos analisando todas as variáveis em nosso modelo para encontrar seu impacto em nossa variável de interesse, credibilidade (sent_to_analysis). 
+
+O pacote `rpart`é usado para Árvores de particionamento e regressão recursivas.
+Completando os recursos necessário, o pacote `rpart.plot`será usado para plotar o gráfico.
+
+Temporáriamente a coluna `sent_to_analysis`será transofmrada em categórica, pois a biblioteca rpart usa dessa forma.
+
+```{r, message=FALSE, warning=FALSE}
+library(rpart)
+set.seed(1)
+credit$sent_to_analysis <- as.factor(credit$sent_to_analysis)
+TreeModel <- rpart(sent_to_analysis ~ ., data = credit[i_calibration1, ])
+library(rpart.plot)
+prp(TreeModel, type = 2, extra = 1)
+```
+
+
+```{r, message=FALSE, warning=FALSE}
+fitTree <- predict(TreeModel, newdata = credit[i_test1, ], type = 'prob')[, 2]
+pred3 <- prediction(fitTree, credit$sent_to_analysis[i_test1])
+perf3 <- performance(pred3, 'tpr', 'fpr')
+plot(perf3,colorize=TRUE,print.cutoffs.at=seq(0,1,by=0.1), text.adj=c(-0.2,1.7))
+```
+
+
+```{r, message=FALSE, warning=FALSE}
+AUCTree <- performance(pred3, measure = 'auc')@y.values[[1]]
+AUCTree
+```
+
+O resultado foi pior do que o anterior. E ambos não são resultados satisfatórios, dada a complexidade do nosso modelo de árvore, então, novamente, temos que nos perguntar se não estamos melhor usando o modelo de Regressão Logística mais simples do primeiro modelo.
+
+## Método três: floresta aleatória (Random Forest)
+
+Em vez de construir uma árvore de decisão, podemos usar o método Random Forest para criar uma "floresta" metafóra de árvores de decisão. Neste método, o resultado final é o modo das classes (se trabalharmos em um modelo de classificação) ou a média das previsões (se estiver trabalhando com regressões).
+
+A idéia por trás da floresta aleatória é que as árvores de decisão são propensas a superação, então encontrar a árvore "média" na floresta pode ajudar a evitar esse problema.
+
+```{r, message=FALSE, warning=FALSE}
+library(randomForest)
+set.seed(1)
+RF <- randomForest(sent_to_analysis ~ ., data = credit[i_calibration1, ])
+fitForest1 <- predict(RF, newdata = credit[i_test1, ], type = 'prob')[, 2]
+pred4 <- prediction(fitForest1, credit$sent_to_analysis[i_test1])
+perf4 <- performance(pred4, 'tpr', 'fpr')
+plot(perf4,colorize=TRUE,print.cutoffs.at=seq(0,1,by=0.1), text.adj=c(-0.2,1.7))
+```
+
+Agora vamos avaliar o desempenho
+
+```{r, message=FALSE, warning=FALSE}
+AUCRF <- performance(pred4, measure = 'auc')@y.values[[1]]
+AUCRF
+```
+
+Com o esforço extra, ainda assim não obtemos um resultado um tanto melhorado. O modelo de Regressão logística é o melhor desempenho até o momento. 
+
+## Método quarto: Comparando florestas aleatórias com modelos logísticos
+
+Analisamos vários resultados usando dois métodos básicos de análise - regressões logísticas e árvores de decisão. Verificamos apenas resultados individuais expressos como AUC.
+
+A abordagem da floresta aleatória exige que criemos uma floresta de árvores de decisão e assumimos o modo ou a média. Por que não fazer uso de todos esses dados? Como eles se parecem?
+
+O código a seguir cria um gráfico que representa centenas de combinações de pontuações AUC para cada árvore em nossa floresta aleatória e para modelos logísticos.
+
+Primeiro precisamos de uma função para realizar a análise.
+
+**OBS: para esse modelo vamos deixar todas as variáveis no modelo.**
+
+```{r, message=FALSE, warning=FALSE}
+AUC <- function(i){
+        set.seed(i)
+        i_test2 <<- sample(1:nrow(credit), size = dim(credit)[1]*.7)
+        i_calibration2 <<- (1:nrow(credit))[-i_test2]
+        # vamos criar esse modelo no ambiente global, pois vamos usa-lo mais na frente
+        LogisticModel.3 <<- glm(sent_to_analysis ~ ., family = binomial, data = credit[i_calibration2, ])
+        summary(LogisticModel.3)
+        fitLog3 <- predict(LogisticModel.3, type = 'response', newdata = credit[i_test2, ])
+        library(ROCR)
+        pred5 <- prediction(fitLog3, credit$sent_to_analysis[i_test2])
+        AUCLog3 <- performance(pred5, measure = 'auc')@y.values[[1]]
+        RF <- randomForest(sent_to_analysis ~ ., data = credit[i_calibration2, ])
+        fitForest2 <- predict(RF, newdata = credit[i_test2, ], type = 'prob')[, 2]
+        pred6 <- prediction(fitForest2, credit$sent_to_analysis[i_test2])
+        AUCRF <- performance(pred6, measure = 'auc')@y.values[[1]]
+        return(c(AUCLog3, AUCRF))
+}
+```
+
+
+Esta parte do código leva um tempo para ser executado porque estamos tabulando e gravando centenas de resultados individuais. Você pode ajustar o número de resultados no modelo alterando a contagem no objeto VAUC. Aqui, escolhemos calcular 50 x-y pares, ou 100 resultados individuais.
+
+Normalmente `markdown` não é usado para relatórios longos ou demorados, mas para essa demanda o processo foi realizado aqui mesmo.
+
+
+```{r VAUC, message=FALSE, warning=FALSE}
+VAUC <- Vectorize(AUC)(1:100)
+plot(t(VAUC), xlab = 'Logistic', ylab = 'Random Forest')
+```
+
+É possível verificar que os resultados que temos dos primeiros quatro modelos estão bem no meio da distribuição.
+
+Isso confirma para nós os modelos são bastante comparáveis. O melhor que podemos esperar é uma AUC de 0,77 e a maioria nos dá resultados semelhantes ao que já calculamos.
+
+Mas vamos tentar visualizar um pouco melhor. Um par de pacotes R pode ser usado para melhorar a representação gráfica dos resultados. Isso nos mostrará exatamente onde o conjunto de resultados mais provável reside.
+
+Primeiro, precisamos converter nosso objeto VAUC em um Data Frame.
+
+```{r, message=FALSE, warning=FALSE}
+AA <- as.data.frame(t(VAUC))
+```
+
+Vamos usar as bibliotecas `ggplot2` e `hdrcde` para criar alguns gráficos. O primeiro é um gráfico de contorno de densidade.
+
+```{r warning=FALSE, message=FALSE}
+library(ggplot2)
+data(AA, package = 'MASS')
+ggplot(AA, aes(x = V1, y = V2)) + geom_point() + geom_density2d() + xlab('Logistic') + ylab('Random Forest')
+```
+
+O segundo é um gráfico de contorno de alta densidade que nos dá as regiões de probabilidade para os dados.
+
+```{r message=FALSE, warning=FALSE}
+library("hdrcde")
+par(mar = c(3.1, 4.1, 1.1, 2.1))
+with(AA, hdr.boxplot.2d(V1, V2, show.points = TRUE, prob = c(.01, .05, .5, .75), xlab = 'Logistic', ylab = 'Random Forest'))
+```
+
+De qualquer maneira que descrevemos nossos resultados, temos que usar os dados para tomar uma decisão de empréstimo, há um problema aqui?
+
+Estas podem ser as melhores pontuações que podemos encontrar com esses modelos, mas os resultados são aceitáveis para determinar o mérito do credor? Isso depende dos padrões de crédito utilizados pela instituição de crédito.
+
+Na melhor das hipóteses, parece que nossos modelos nos dão 82% de chance de emprestar a bons riscos de crédito. Por cada R\$ 1 milhão em empréstimos, na melhor das hipóteses, podemos esperar que seja reembolsado R\$ 820.000. Em média, esperamos recuperar cerca de R\$ 780 mil em principal. Em outras palavras, de acordo com nossa análise, há entre 75% e 80% de chance de recuperar nosso empréstimo de US R\$ 1 milhão, dependendo do método de modelagem que usamos.
+
+À medida que adicionamos candidatos de empréstimo a nossas bases de dados, gostaríamos que eles se agrupassem na área mais escura do gráfico de alta densidade se considerarmos bons riscos de crédito.
+
+A menos que cobramos muito interesse para cobrir nossas perdas, talvez precisemos de melhores modelos.
+
+Como há muitas possíveis variáveis para o modelo, podemos proceder com a abordagem de Stepwise para selecionar o modelo com a "melhor" combinação de variáveis explicativas:
+
+### Outro teste (AIC)
+
+O critério de informação Akaike (AIC) é uma medida da qualidade relativa dos modelos estatísticos para um dado conjunto de dados. Dada uma coleção de modelos para os dados, AIC estima a qualidade de cada modelo, em relação a cada um dos outros modelos. Assim, a AIC fornece um meio para a seleção do modelo.
+
+O AIC é baseado na teoria da informação: oferece uma estimativa relativa da informação perdida quando um determinado modelo é usado para representar o processo que gera os dados. Ao fazê-lo, trata-se do trade-off entre a bondade do ajuste do modelo e a complexidade do modelo.
+
+O Critério de Informação de Akaike (AIC) é definido como 
+
+$$AIC_p=-2log(L_p)+2[(p+1)+1],$$
+
+em que $L_p$ é a função de máxima verossimilhança do modelo e p é o número de variáveis explicativas consideradas no modelo.
+
+O Critério de Informação Bayesiano (BIC) é definido como 
+
+$$BIC_p=-2log(L_p)+[(p+1)+1]log(n).$$
+
+Tanto o AIC quanto o BIC aumentam conforme SQE aumenta. Além disso, ambos critérios penalizam modelos com muitas variáveis sendo que valores menores de AIC e BIC são preferíveis.
+
+Como modelos com mais variáveis tendem a produzir menor SQE mas usam mais parâmetros, a melhor escolha é balancear o ajuste com a quantidade de variáveis.
+
+**Criando outro modelo para teste**
+
+Mais uma vez vamos usar todas as variáveis no modelo.
+
+```{r warning=FALSE, message=FALSE}
+#Índices obtidos após a aleatorização
+ordena <- sort(sample(nrow(credit), size = dim(credit)[1]*.7))
+
+#Dados para o treinamento
+treinamento<-credit[ordena,]
+#Dados para a validação
+validacao<-credit[-ordena,]
+#Regressão Logística
+modelo.completo <- glm(sent_to_analysis ~ . ,family=binomial,data=treinamento)
+```
+
+
+Vamos fazer isso com o melhor modelo, mas antes temos que voltar aos dados originais (nao normalizados), pois estamos em busca de sucesso ou fracasso, então a distribuição típica é Poison.
+
+Vamos usar a biblioteca MASS para calcular intervalos de confiança a partir de modelos de regressão logística.
+
+```{r message=FALSE, warning=FALSE}
+library("MASS")
+stepwise <- stepAIC(LogisticModel.3,direction="both")
+```
+
+
+Após algumas iterações, observa-se que o conjunto de variáveis com o menor valor para o Critério de Informação de Akaike é:
+
+```{r, message=FALSE, warning=FALSE}
+summary(stepwise)
+```
+
+Percebemos que nem todas as variáveis são significativas. Podemos excluir do modelo `serasa_dishonored_checks`, `serasa_commercial_debts` e todas as outras com p-value maior que $0.05$. Na verdade as restrições ao crédito não são tão importantes para o modelo.
+
+Uma medida interessante para interpretar o modelo é a medida de Razão de chances (Odds Ratio) que calcula a razão de chances.
+
+Em estatística, o odds ratio (OR) é uma das três principais maneiras de quantificar a intensidade da presença ou ausência da propriedade $A$ associada à presença ou ausência da propriedade $B$ em uma determinada população.
+        
+```{r message=FALSE, warning=FALSE}
+exp(cbind(OR = coef(stepwise), confint(stepwise)))
+```
+
+
+A ideia agora é construir o(s) modelo(s) de Credit Scoring com o DataFrame "credit" e em seguida avaliar o ajuste com o DataFrame "validacao". 
+
+```{r, message=FALSE, warning=FALSE}
+#Abordagem Stepwise para seleção de variáveis
+        
+#Faz a previsão para a base de validação (probabilidade)
+predito <- predict(stepwise,validacao,type="response")
+
+#Escolhe quem vai ser "1" e quem vai ser "0"
+predito <- ifelse(predito>=0.8,1,0)
+  
+#Compara os resultados
+table(predito,validacao$sent_to_analysis)
+
+```
+
+A taxa de acerto é:
+
+$$
+Tx = \frac {798+16}{1248}
+$$
+```{r, message=FALSE, warning=FALSE}
+(table(predito,validacao$sent_to_analysis)[1]+table(predito,validacao$sent_to_analysis)[4])/ (table(predito,validacao$sent_to_analysis)[1]+table(predito,validacao$sent_to_analysis)[2]+table(predito,validacao$sent_to_analysis)[3]+table(predito,validacao$sent_to_analysis)[4])
+```
+
+Podemos melhorar a taxa de acerto refinando o modelo por meio da exclusão de variáveis não significantes e pela inclusão de componentes estatisticamente significantes.
+
+## Usando o AIC e Maximum likelihood
+
+```{r, message=FALSE, warning=FALSE}
+logLik(modelo.completo)
+logLik(LogisticModel.1)
+logLik(LogisticModel.3)
+
+
+```
+
+Então temos o valor do modelo que sabemos que é o correto de $-1590.07$, enquanto o modelo mais simples sem as variáveis `education_level` e `marital_status` (e errado) foi de -801.05. O modelo, também completo, vemos então que quanto melhor o ajuste (e teoricamente melhor o modelo) temos um valor maior de logLik.
+
+
+```{r, message=FALSE, warning=FALSE}
+extractAIC(modelo.completo)
+extractAIC(LogisticModel.1)
+extractAIC(LogisticModel.3)
+```
+
+Agora o modelo 1, com 2 parâmetros a menos tem um valor mais alto de $3247$ enquanto o modelo 3 (que sabemos que é o correto) tem um parâmetro e o valor de 1630 de AIC, mas o *modelo completo* tem o menor valor, então valores menores devem ser bons. Somos inclinados a usar o modelo completo que tem os 2 parâmetros, intercepto e inclinação.
+
+Mas podemos ainda fazer um teste F, vendo a razão entre os logLik para saber se os modelos são diferentes.
+
+```{r, message=FALSE, warning=FALSE}
+anova(LogisticModel.1,LogisticModel.3)
+```
+
+Existem diferenças entre os modelos, então ficamos com aquele com mais parâmetros, o modelo 1, o mais complexo, não podemos abandonar ele pelo mais simples, ja que ele explica muita coisa que o modelo 2 mais simples não deu conta de explicar, mas não podemos esquecer que:
+
+**OBS:** retiramos do modelo as variáveis `education_level` e `marital_status`, essas variáveis deixam o modelo instável e *uma predição a partir de um ajuste `rank-deficient` pode ser enganoso*.  Entãoi vamos ficar com o modelo 3, cujos valores estão no meio termo qusando comparado aos dois outros models.
+
+
+Podemos ainda fazer isso usando o comando $step()$, que vai pegar o modelo inicial que você fornecer, e se você mandar ele simplificar com o argumento $direction =”backward”$, ele vai tirando um por um dos parâmetros, e ve se o modelo fica diferente, se continuar explicando bem os dados, ele descarta esse parâmetro, so deixar o $trace=1$ para ver o processo, como o modelo mais complexo aqui, o modelo 1, ele  faz isso quantas vezes for o núemro de variáveis menos um.
+
+Então temos:
+
+ps(trace=1 e nesse caso o direction=”backward” são os default da função)
+
+```{r, message=FALSE, warning=FALSE}
+mod.final3 <- step(LogisticModel.3)
+```
+
+```{r, message=FALSE, warning=FALSE}
+mod.final3
+```
+
+Precisamos de uma boa linha de base que crie "o melhor modelo simples" que traga um equilíbrio entre a melhor precisão possível com um modelo que ainda é simples o suficiente para entender: desenvolvi o pacote OneR para encontrar esse ponto e, assim, estabelecer uma nova linha de base Para modelos de classificação em Aprendizado de Máquinas (ML).
+
+O pacote `OneR` está preenchendo uma lacuna de longa data porque apenas uma implementação baseada em JAVA estava disponível até agora (pacote RWeka como uma interface para a classe OneR JAVA). Além disso, vários aprimoramentos foram feitos.
+
+
+```{r, message=FALSE, warning=FALSE}
+coefficients(LogisticModel.1) * 20/log(2)
+```
+
+## Uma nova abordagem
+
+Agora vamos usar o pacote `OneR` e comparar.
+Mas na criação do modelo vamos ignorar a coluna `educarion_level`, essa coluna apenas prejudica o modelo. Em uma versão de teste os resultados foram muito abaixo do esperado.
+Veja abaixo o exemplo com essa variável.
+
+```{r message=FALSE, warning=FALSE}
+library("OneR")
+modelOne <- OneR(credit, verbose = TRUE)
+
+```
+
+Agora sem a variável:
+
+```{r, message=FALSE, warning=FALSE}
+library("OneR")
+modelOne <- OneR(credit[,-16], verbose = TRUE)
+
+```
+
+Vamos mostrar as regras aprendidas e diagnósticos do modelo.
+
+```{r, message=FALSE, warning=FALSE}
+summary(modelOne)
+```
+
+Agora sim temos um modelo mais performático.
+
+Então vamos plotar o Diagnóstico do modelo 
+
+```{r, message=FALSE, warning=FALSE}
+plot(modelOne)
+```
+
+**Usando o modelo para prever dados**
+
+```{r, message=FALSE, warning=FALSE}
+prediction <- predict(modelOne, credit[,c(1:5,12:14,16)])
+```
+
+**Avaliando as estatísticas de previsão**
+
+```{r, message=FALSE, warning=FALSE}
+eval_model(prediction, credit[,c(1:5,12:14,16)])
+```
+
+Sim, esse modelo com 98,4% é o modelo ideal para classificação de crédito com garantial de automóvel. Vale lembrar que a cada novo dado o modelo precisa ser treinado novamente par uma melhor previsão.
+
