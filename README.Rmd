@@ -652,3 +652,21 @@ eval_model(prediction, credit[,c(1:5,12:14,16)])
 
 Sim, esse modelo com 98,4% é o modelo ideal para classificação de crédito com garantial de automóvel. Vale lembrar que a cada novo dado o modelo precisa ser treinado novamente par uma melhor previsão.
 
+## Conclusão
+
+Usamos quatro modelos com os seguintes desempenhos:
+
+-------------|-------------------|
+Modelo       | Desempenho    
+-------------|-------------------|
+Regressão Logística | 0.75
+Árvore de Regressão | 0.71
+floresta aleatória | 0.74
+Comparação GLM x RF | 0.65
+One level decision trees| 0.98
+
+Concluimos que o algoritmo `One level decision trees` é o melhor.
+
+.
+  
+

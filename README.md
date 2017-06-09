@@ -438,7 +438,7 @@ AUCLog1 <- performance(pred1, measure = 'auc')@y.values[[1]]
 AUCLog1
 ```
 
-    ## [1] 0.7500528
+    ## [1] 0.7471324
 
 Esse não é um resultado ruim, mas vamos ver se podemos fazer melhor com um método diferente.
 
@@ -478,7 +478,7 @@ AUCTree <- performance(pred3, measure = 'auc')@y.values[[1]]
 AUCTree
 ```
 
-    ## [1] 0.7155061
+    ## [1] 0.7115786
 
 O resultado foi pior do que o anterior. E ambos não são resultados satisfatórios, dada a complexidade do nosso modelo de árvore, então, novamente, temos que nos perguntar se não estamos melhor usando o modelo de Regressão Logística mais simples do primeiro modelo.
 
@@ -508,7 +508,7 @@ AUCRF <- performance(pred4, measure = 'auc')@y.values[[1]]
 AUCRF
 ```
 
-    ## [1] 0.7496038
+    ## [1] 0.7510963
 
 Com o esforço extra, ainda assim não obtemos um resultado um tanto melhorado. O modelo de Regressão logística é o melhor desempenho até o momento.
 
@@ -899,7 +899,7 @@ logLik(modelo.completo)
 logLik(LogisticModel.1)
 ```
 
-    ## 'log Lik.' -813.27 (df=14)
+    ## 'log Lik.' -795.2899 (df=14)
 
 ``` r
 logLik(LogisticModel.3)
@@ -919,7 +919,7 @@ extractAIC(modelo.completo)
 extractAIC(LogisticModel.1)
 ```
 
-    ## [1]   14.00 1654.54
+    ## [1]   14.00 1618.58
 
 ``` r
 extractAIC(LogisticModel.3)
@@ -949,8 +949,8 @@ anova(LogisticModel.1,LogisticModel.3)
     ##     serasa_commercial_debts + serasa_protests + marital_status + 
     ##     monthly_payment + purpose + education_level
     ##   Resid. Df Resid. Dev Df Deviance
-    ## 1      1234     720.54            
-    ## 2      1234    1370.45  0  -649.91
+    ## 1      1234     714.58            
+    ## 2      1234    1370.45  0  -655.87
 
 Existem diferenças entre os modelos, então ficamos com aquele com mais parâmetros, o modelo 1, o mais complexo, não podemos abandonar ele pelo mais simples, ja que ele explica muita coisa que o modelo 2 mais simples não deu conta de explicar, mas não podemos esquecer que:
 
@@ -1131,15 +1131,15 @@ coefficients(LogisticModel.1) * 20/log(2)
 ```
 
     ##              (Intercept)                      age           monthly_income 
-    ##            -3.243942e+01             3.198618e+01            -2.702324e+02 
+    ##            -2.958275e+01             2.036554e+01            -5.951529e-01 
     ##         collateral_value              loan_amount   collateral_debt_amount 
-    ##            -2.188574e+03             3.408626e+01            -8.703873e+04 
+    ##             3.774969e+01            -4.555515e+00            -6.483539e+04 
     ##       serasa_restriction serasa_dishonored_checks     serasa_expired_debts 
-    ##            -1.996582e+01            -4.392602e+02            -3.965658e+02 
+    ##            -5.950905e+00            -4.307298e+02            -4.542833e+02 
     ##     serasa_banking_debts  serasa_commercial_debts          serasa_protests 
-    ##            -5.059458e+01            -4.212423e+00             9.623641e+00 
+    ##            -7.476984e+01            -1.834886e+01            -4.270302e+02 
     ##          monthly_payment                  purpose 
-    ##             6.952592e+01             3.049794e-01
+    ##             9.214073e+01            -5.171327e+00
 
 Uma nova abordagem de um novo modelo
 ------------------------------------
@@ -1287,3 +1287,15 @@ eval_model(prediction, credit[,c(1:5,12:14,16)])
     ## -Inf (p-value = 1)
 
 Sim, esse modelo com 98,4% é o modelo ideal para classificação de crédito com garantial de automóvel. Vale lembrar que a cada novo dado o modelo precisa ser treinado novamente par uma melhor previsão.
+
+Conclusão
+---------
+
+Usamos quatro modelos com os seguintes desempenhos:
+
+-------------|-------------------| Modelo | Desempenho
+-------------|-------------------| Regressão Logística | 0.75 Árvore de Regressão | 0.71 floresta aleatória | 0.74 Comparação GLM x RF | 0.65 One level decision trees| 0.98
+
+Concluimos que o algoritmo `One level decision trees` é o melhor.
+
+.
