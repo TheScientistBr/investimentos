@@ -412,8 +412,6 @@ LogisticModel.1 <- glm(sent_to_analysis ~ . -education_level -marital_status,
                        family = poisson(link = "log"),data = credit[i_calibration1, ])
 ```
 
-    ## Warning: glm.fit: fitted rates numerically 0 occurred
-
 Com isso, podemos avançar para ajustar o modelo que acabamos de criar para o conjunto de testes, i\_test1, e nos preparar para fazer nossa primeira previsão.
 
 ``` r
@@ -438,7 +436,7 @@ AUCLog1 <- performance(pred1, measure = 'auc')@y.values[[1]]
 AUCLog1
 ```
 
-    ## [1] 0.746522
+    ## [1] 0.7497481
 
 Esse não é um resultado ruim, mas vamos ver se podemos fazer melhor com um método diferente.
 
@@ -478,7 +476,7 @@ AUCTree <- performance(pred3, measure = 'auc')@y.values[[1]]
 AUCTree
 ```
 
-    ## [1] 0.720109
+    ## [1] 0.6980508
 
 O resultado foi pior do que o anterior. E ambos não são resultados satisfatórios, dada a complexidade do nosso modelo de árvore, então, novamente, temos que nos perguntar se não estamos melhor usando o modelo de Regressão Logística mais simples do primeiro modelo.
 
@@ -508,7 +506,7 @@ AUCRF <- performance(pred4, measure = 'auc')@y.values[[1]]
 AUCRF
 ```
 
-    ## [1] 0.7489434
+    ## [1] 0.7396471
 
 Com o esforço extra, ainda assim não obtemos um resultado um tanto melhorado. O modelo de Regressão logística é o melhor desempenho até o momento.
 
@@ -899,7 +897,7 @@ logLik(modelo.completo)
 logLik(LogisticModel.1)
 ```
 
-    ## 'log Lik.' -787.2288 (df=14)
+    ## 'log Lik.' -813.4712 (df=14)
 
 ``` r
 logLik(LogisticModel.3)
@@ -919,7 +917,7 @@ extractAIC(modelo.completo)
 extractAIC(LogisticModel.1)
 ```
 
-    ## [1]   14.000 1602.458
+    ## [1]   14.000 1654.942
 
 ``` r
 extractAIC(LogisticModel.3)
@@ -949,8 +947,8 @@ anova(LogisticModel.1,LogisticModel.3)
     ##     serasa_commercial_debts + serasa_protests + marital_status + 
     ##     monthly_payment + purpose + education_level
     ##   Resid. Df Resid. Dev Df Deviance
-    ## 1      1234     694.46            
-    ## 2      1234    1370.45  0  -675.99
+    ## 1      1234     732.94            
+    ## 2      1234    1370.45  0  -637.51
 
 Existem diferenças entre os modelos, então ficamos com aquele com mais parâmetros, o modelo 1, o mais complexo, não podemos abandonar ele pelo mais simples, ja que ele explica muita coisa que o modelo 2 mais simples não deu conta de explicar, mas não podemos esquecer que:
 
@@ -1131,15 +1129,15 @@ coefficients(LogisticModel.1) * 20/log(2)
 ```
 
     ##              (Intercept)                      age           monthly_income 
-    ##            -2.774151e+01             1.494552e+01            -1.894345e+02 
+    ##               -37.006431                26.685252              -248.968860 
     ##         collateral_value              loan_amount   collateral_debt_amount 
-    ##            -4.699841e+03             5.883479e+00            -8.627714e+04 
+    ##                 4.105753                32.211006            -59920.312608 
     ##       serasa_restriction serasa_dishonored_checks     serasa_expired_debts 
-    ##            -3.823592e+01            -4.079574e+02            -3.336805e+02 
+    ##                -9.945645              -416.592456              -381.828218 
     ##     serasa_banking_debts  serasa_commercial_debts          serasa_protests 
-    ##            -5.952632e+01             6.049834e+00             1.027800e+01 
+    ##               -34.925778               -23.552788               -19.620253 
     ##          monthly_payment                  purpose 
-    ##             1.212949e+02             7.733364e-01
+    ##                87.489188                 3.887708
 
 Uma nova abordagem de um novo modelo
 ------------------------------------
@@ -1292,12 +1290,6 @@ Conclusão
 ---------
 
 Usamos quatro modelos com os seguintes desempenhos:
-
-``` r
-library(knitr)
-myTable <- data.frame(Modelo = c("Regressão Logística", "Árvore de Regressão", "Floresta aleatória", "Comparação GLM x RF", "One level decision trees"), Desemepmnho = c(0.75,0.71, 0.74, 0.65, 0.98))
-kable(myTable)
-```
 
 | Modelo                   |  Desemepmnho|
 |:-------------------------|------------:|
