@@ -181,18 +181,18 @@ Vamos então retirar algumas colunas para um novo dataset para o processamento, 
 
 ``` r
 credit <- ndf
-credit[,c(1,2,7,8,17,18,21:25,27:33,35,36)] <- NULL
+credit[,c(1,2,7,8,21:25,27:33,35,36)] <- NULL
 dim(credit)[1]
 ```
 
     ## [1] 4172
 
 ``` r
-remove(ndf)
+#remove(ndf)
 ```
 
 ``` r
-summary(credit[,c(1:5,13,14)])
+summary(credit[,c(1:5,14:16,18)])
 ```
 
     ##       age         monthly_income     collateral_value    loan_amount    
@@ -202,13 +202,23 @@ summary(credit[,c(1:5,13,14)])
     ##  Mean   : 38.84   Mean   :   14541   Mean   :   53686   Mean   : 15550  
     ##  3rd Qu.: 46.00   3rd Qu.:    6700   3rd Qu.:   34000   3rd Qu.: 20000  
     ##  Max.   :115.00   Max.   :11000000   Max.   :27000000   Max.   :288000  
-    ##  collateral_debt_amount monthly_payment      purpose      
-    ##  Min.   :       0       Min.   :    0.0   Min.   :   1.0  
-    ##  1st Qu.:       0       1st Qu.:  365.9   1st Qu.: 609.8  
-    ##  Median :       0       Median :  580.6   Median :1105.0  
-    ##  Mean   :    4880       Mean   :  725.6   Mean   :1188.9  
-    ##  3rd Qu.:      10       3rd Qu.:  891.1   3rd Qu.:1888.2  
-    ##  Max.   :10100000       Max.   :12000.0   Max.   :2471.0
+    ##                                                                         
+    ##  collateral_debt_amount loan_term      monthly_payment      purpose      
+    ##  Min.   :       0       Mode:logical   Min.   :    0.0   Min.   :   1.0  
+    ##  1st Qu.:       0       NA's:4172      1st Qu.:  365.9   1st Qu.: 609.8  
+    ##  Median :       0                      Median :  580.6   Median :1105.0  
+    ##  Mean   :    4880                      Mean   :  725.6   Mean   :1188.9  
+    ##  3rd Qu.:      10                      3rd Qu.:  891.1   3rd Qu.:1888.2  
+    ##  Max.   :10100000                      Max.   :12000.0   Max.   :2471.0  
+    ##                                                                          
+    ##  education_level 
+    ##  Min.   : 1.000  
+    ##  1st Qu.: 6.000  
+    ##  Median : 9.000  
+    ##  Mean   : 7.764  
+    ##  3rd Qu.: 9.000  
+    ##  Max.   :11.000  
+    ##  NA's   :765
 
 Nesta fase vamos apenas entender se existe valores do tipo outliers. Não vamos avaliar as medidas de tendência central da coluna `sent_to_analysis`. Observando os valores acima é fácil perceber que alguns clientes digitaram informações aparentemente inconsistentes, como por exemplo, o `monthly_payment`. Valores zero e outros muito acima da média, o que podemos considerar outliers. O mesmo vale para a idade. O mesmo ocorre com `loan_term`, vamos retirar esses valores faltantes.
 
@@ -227,8 +237,9 @@ credit$purpose <- standValue(credit$purpose)
 credit$age <- standValue(credit$age)
 credit$education_level <- standValue(credit$education_level)
 credit$marital_status <- standValue(credit$marital_status)
+credit$monthly_payment <- standValue(credit$monthly_payment)
 
-summary(credit[,c(1:5,13,14)])
+summary(credit[,c(1:5,14:16,18)])
 ```
 
     ##       age         monthly_income      collateral_value   
@@ -238,20 +249,23 @@ summary(credit[,c(1:5,13,14)])
     ##  Mean   :0.2148   Mean   :0.0012493   Mean   :0.0019874  
     ##  3rd Qu.:0.2887   3rd Qu.:0.0005364   3rd Qu.:0.0012583  
     ##  Max.   :1.0000   Max.   :1.0000000   Max.   :1.0000000  
-    ##   loan_amount      collateral_debt_amount monthly_payment  
-    ##  Min.   :0.00000   Min.   :0.0000000      Min.   :0.00000  
-    ##  1st Qu.:0.01576   1st Qu.:0.0000000      1st Qu.:0.03049  
-    ##  Median :0.03436   Median :0.0000000      Median :0.04838  
-    ##  Mean   :0.04571   Mean   :0.0004832      Mean   :0.06046  
-    ##  3rd Qu.:0.06130   3rd Qu.:0.0000010      3rd Qu.:0.07426  
-    ##  Max.   :1.00000   Max.   :1.0000000      Max.   :1.00000  
-    ##     purpose      
-    ##  Min.   :0.0000  
-    ##  1st Qu.:0.2465  
-    ##  Median :0.4470  
-    ##  Mean   :0.4809  
-    ##  3rd Qu.:0.7641  
-    ##  Max.   :1.0000
+    ##                                                          
+    ##   loan_amount      collateral_debt_amount loan_term      monthly_payment  
+    ##  Min.   :0.00000   Min.   :0.0000000      Mode:logical   Min.   :0.00000  
+    ##  1st Qu.:0.01576   1st Qu.:0.0000000      NA's:4172      1st Qu.:0.03049  
+    ##  Median :0.03436   Median :0.0000000                     Median :0.04838  
+    ##  Mean   :0.04571   Mean   :0.0004832                     Mean   :0.06046  
+    ##  3rd Qu.:0.06130   3rd Qu.:0.0000010                     3rd Qu.:0.07426  
+    ##  Max.   :1.00000   Max.   :1.0000000                     Max.   :1.00000  
+    ##                                                                           
+    ##     purpose       education_level
+    ##  Min.   :0.0000   Min.   : NA    
+    ##  1st Qu.:0.2465   1st Qu.: NA    
+    ##  Median :0.4470   Median : NA    
+    ##  Mean   :0.4809   Mean   :NaN    
+    ##  3rd Qu.:0.7641   3rd Qu.: NA    
+    ##  Max.   :1.0000   Max.   : NA    
+    ##                   NA's   :4172
 
 Agora com os dados normalizados passamos para a próxima fase.
 
@@ -306,13 +320,13 @@ Os valores acima ordenados por `collateral_value` mostram que o valor máximo é
 Comparando todas as variáveis com e sem os outliers
 
 ``` r
-boxplot(credit[,c(1:5,13:14)])
+boxplot(credit[,c(2:5,14:15)])
 ```
 
 ![](README_files/figure-markdown_github/unnamed-chunk-12-1.png)
 
 ``` r
-boxplot(credit[,c(1:5,13:14)],outline = FALSE)
+boxplot(credit[,c(2:5,14:15)],outline = FALSE)
 ```
 
 ![](README_files/figure-markdown_github/unnamed-chunk-12-2.png)
@@ -401,14 +415,14 @@ Vamos criar vários modelos, por isso é necessário dar-lhes designações num�
 
 Nesta fase, realizaremos uma regressão logística usando a função glm(). Começamos com o conjunto de práticas, i\_calibration1. Aqui, seremos seletivos com as variáveis que usamos no modelo. Vamos mudar isso um pouco, mas, por enquanto, usaremos apenas cinco para determinar o valor da credibilidade.
 
-**OBS:** retiramos do modelo as variáveis `education_level` e `marital_status`, essas variáveis deixam o modelo instável e *uma predição a partir de um ajuste `rank-deficient` pode ser enganoso*.
+**OBS:** retiramos do modelo as variáveis `education_level`, `loan_term` e `marital_status`, essas variáveis deixam o modelo instável e *uma predição a partir de um ajuste `rank-deficient` pode ser enganoso*.
 
 ``` r
 i_test1 <- sort(sample(1:nrow(credit), size = dim(credit)[1]*.7))
 
 i_calibration1 <- (1:nrow(credit))[-i_test1]
 set.seed(1)
-LogisticModel.1 <- glm(sent_to_analysis ~ . -education_level -marital_status, 
+LogisticModel.1 <- glm(sent_to_analysis ~ . -education_level -marital_status -loan_term, 
                        family = poisson(link = "log"),data = credit[i_calibration1, ])
 ```
 
@@ -438,7 +452,7 @@ AUCLog1 <- performance(pred1, measure = 'auc')@y.values[[1]]
 AUCLog1
 ```
 
-    ## [1] 0.7469674
+    ## [1] 0.7503324
 
 Esse não é um resultado ruim, mas vamos ver se podemos fazer melhor com um método diferente.
 
@@ -478,7 +492,7 @@ AUCTree <- performance(pred3, measure = 'auc')@y.values[[1]]
 AUCTree
 ```
 
-    ## [1] 0.7121979
+    ## [1] 0.7137144
 
 O resultado foi pior do que o anterior. E ambos não são resultados satisfatórios, dada a complexidade do nosso modelo de árvore, então, novamente, temos que nos perguntar se não estamos melhor usando o modelo de Regressão Logística mais simples do primeiro modelo.
 
@@ -508,7 +522,7 @@ AUCRF <- performance(pred4, measure = 'auc')@y.values[[1]]
 AUCRF
 ```
 
-    ## [1] 0.759993
+    ## [1] 0.7417015
 
 Com o esforço extra, ainda assim não obtemos um resultado um tanto melhorado. O modelo de Regressão logística é o melhor desempenho até o momento.
 
@@ -642,155 +656,172 @@ Vamos usar a biblioteca MASS para calcular intervalos de confiança a partir de 
 
 ``` r
 library("MASS")
-stepwise <- stepAIC(LogisticModel.3,direction="both")
+stepwise <- stepAIC(modelo.completo,direction="both")
 ```
 
-    ## Start:  AIC=1398.45
+    ## Start:  AIC=3181.32
     ## sent_to_analysis ~ age + monthly_income + collateral_value + 
     ##     loan_amount + collateral_debt_amount + serasa_restriction + 
     ##     serasa_dishonored_checks + serasa_expired_debts + serasa_banking_debts + 
     ##     serasa_commercial_debts + serasa_protests + marital_status + 
-    ##     monthly_payment + purpose + education_level
+    ##     cpf_restriction + loan_term + monthly_payment + purpose + 
+    ##     education_level
     ## 
     ## 
-    ## Step:  AIC=1398.45
+    ## Step:  AIC=3181.32
     ## sent_to_analysis ~ age + monthly_income + collateral_value + 
     ##     loan_amount + collateral_debt_amount + serasa_restriction + 
     ##     serasa_dishonored_checks + serasa_expired_debts + serasa_banking_debts + 
     ##     serasa_commercial_debts + serasa_protests + marital_status + 
-    ##     monthly_payment + purpose
+    ##     cpf_restriction + loan_term + monthly_payment + purpose
     ## 
     ## 
-    ## Step:  AIC=1398.45
+    ## Step:  AIC=3181.32
     ## sent_to_analysis ~ age + monthly_income + collateral_value + 
     ##     loan_amount + collateral_debt_amount + serasa_restriction + 
     ##     serasa_dishonored_checks + serasa_expired_debts + serasa_banking_debts + 
-    ##     serasa_commercial_debts + serasa_protests + monthly_payment + 
-    ##     purpose
+    ##     serasa_commercial_debts + serasa_protests + marital_status + 
+    ##     cpf_restriction + monthly_payment + purpose
     ## 
-    ##                            Df Deviance    AIC
-    ## - loan_amount               1   1370.5 1396.5
-    ## - monthly_income            1   1370.8 1396.8
-    ## - serasa_protests           1   1370.9 1396.9
-    ## - serasa_expired_debts      1   1371.1 1397.1
-    ## - purpose                   1   1371.8 1397.8
-    ## <none>                          1370.5 1398.5
-    ## - serasa_commercial_debts   1   1373.2 1399.2
-    ## - collateral_value          1   1373.9 1399.9
-    ## - serasa_dishonored_checks  1   1375.7 1401.7
-    ## - serasa_restriction        1   1375.8 1401.8
-    ## - serasa_banking_debts      1   1378.2 1404.2
-    ## - age                       1   1379.7 1405.7
-    ## - monthly_payment           1   1390.5 1416.5
-    ## - collateral_debt_amount    1   1444.2 1470.2
     ## 
-    ## Step:  AIC=1396.53
+    ## Step:  AIC=3181.32
     ## sent_to_analysis ~ age + monthly_income + collateral_value + 
-    ##     collateral_debt_amount + serasa_restriction + serasa_dishonored_checks + 
-    ##     serasa_expired_debts + serasa_banking_debts + serasa_commercial_debts + 
-    ##     serasa_protests + monthly_payment + purpose
-    ## 
-    ##                            Df Deviance    AIC
-    ## - monthly_income            1   1370.9 1394.9
-    ## - serasa_protests           1   1371.0 1395.0
-    ## - serasa_expired_debts      1   1371.1 1395.1
-    ## - purpose                   1   1371.9 1395.9
-    ## <none>                          1370.5 1396.5
-    ## - serasa_commercial_debts   1   1373.2 1397.2
-    ## + loan_amount               1   1370.5 1398.5
-    ## - collateral_value          1   1374.6 1398.6
-    ## - serasa_dishonored_checks  1   1375.8 1399.8
-    ## - serasa_restriction        1   1376.0 1400.0
-    ## - serasa_banking_debts      1   1378.3 1402.3
-    ## - age                       1   1379.7 1403.7
-    ## - monthly_payment           1   1420.4 1444.4
-    ## - collateral_debt_amount    1   1444.7 1468.7
-    ## 
-    ## Step:  AIC=1394.91
-    ## sent_to_analysis ~ age + collateral_value + collateral_debt_amount + 
-    ##     serasa_restriction + serasa_dishonored_checks + serasa_expired_debts + 
-    ##     serasa_banking_debts + serasa_commercial_debts + serasa_protests + 
+    ##     loan_amount + collateral_debt_amount + serasa_restriction + 
+    ##     serasa_dishonored_checks + serasa_expired_debts + serasa_banking_debts + 
+    ##     serasa_commercial_debts + serasa_protests + cpf_restriction + 
     ##     monthly_payment + purpose
     ## 
     ##                            Df Deviance    AIC
-    ## - serasa_protests           1   1371.3 1393.3
-    ## - serasa_expired_debts      1   1371.5 1393.5
-    ## - purpose                   1   1372.2 1394.2
-    ## <none>                          1370.9 1394.9
-    ## - serasa_commercial_debts   1   1373.6 1395.6
-    ## + monthly_income            1   1370.5 1396.5
-    ## + loan_amount               1   1370.8 1396.8
-    ## - collateral_value          1   1374.9 1396.9
-    ## - serasa_dishonored_checks  1   1376.2 1398.2
-    ## - serasa_restriction        1   1376.3 1398.3
-    ## - serasa_banking_debts      1   1378.7 1400.7
-    ## - age                       1   1379.9 1401.9
-    ## - monthly_payment           1   1420.8 1442.8
-    ## - collateral_debt_amount    1   1445.5 1467.5
+    ## - purpose                   1   3151.3 3179.3
+    ## - serasa_protests           1   3151.3 3179.3
+    ## - monthly_income            1   3151.4 3179.4
+    ## - loan_amount               1   3151.4 3179.4
+    ## - collateral_value          1   3151.9 3179.9
+    ## <none>                          3151.3 3181.3
+    ## - serasa_restriction        1   3153.8 3181.8
+    ## - serasa_expired_debts      1   3154.0 3182.0
+    ## - serasa_commercial_debts   1   3157.3 3185.3
+    ## - serasa_dishonored_checks  1   3165.0 3193.0
+    ## - age                       1   3166.2 3194.2
+    ## - cpf_restriction           1   3168.6 3196.6
+    ## - monthly_payment           1   3170.6 3198.6
+    ## - serasa_banking_debts      1   3174.0 3202.0
+    ## - collateral_debt_amount    1   3433.1 3461.1
     ## 
-    ## Step:  AIC=1393.33
+    ## Step:  AIC=3179.32
+    ## sent_to_analysis ~ age + monthly_income + collateral_value + 
+    ##     loan_amount + collateral_debt_amount + serasa_restriction + 
+    ##     serasa_dishonored_checks + serasa_expired_debts + serasa_banking_debts + 
+    ##     serasa_commercial_debts + serasa_protests + cpf_restriction + 
+    ##     monthly_payment
+    ## 
+    ##                            Df Deviance    AIC
+    ## - serasa_protests           1   3151.3 3177.3
+    ## - monthly_income            1   3151.4 3177.4
+    ## - loan_amount               1   3151.4 3177.4
+    ## - collateral_value          1   3151.9 3177.9
+    ## <none>                          3151.3 3179.3
+    ## - serasa_restriction        1   3153.8 3179.8
+    ## - serasa_expired_debts      1   3154.0 3180.0
+    ## + purpose                   1   3151.3 3181.3
+    ## - serasa_commercial_debts   1   3157.3 3183.3
+    ## - serasa_dishonored_checks  1   3165.0 3191.0
+    ## - age                       1   3166.2 3192.2
+    ## - cpf_restriction           1   3168.7 3194.7
+    ## - monthly_payment           1   3170.7 3196.7
+    ## - serasa_banking_debts      1   3174.0 3200.0
+    ## - collateral_debt_amount    1   3433.9 3459.9
+    ## 
+    ## Step:  AIC=3177.34
+    ## sent_to_analysis ~ age + monthly_income + collateral_value + 
+    ##     loan_amount + collateral_debt_amount + serasa_restriction + 
+    ##     serasa_dishonored_checks + serasa_expired_debts + serasa_banking_debts + 
+    ##     serasa_commercial_debts + cpf_restriction + monthly_payment
+    ## 
+    ##                            Df Deviance    AIC
+    ## - monthly_income            1   3151.4 3175.4
+    ## - loan_amount               1   3151.4 3175.4
+    ## - collateral_value          1   3152.0 3176.0
+    ## <none>                          3151.3 3177.3
+    ## - serasa_restriction        1   3154.0 3178.0
+    ## - serasa_expired_debts      1   3154.1 3178.1
+    ## + serasa_protests           1   3151.3 3179.3
+    ## + purpose                   1   3151.3 3179.3
+    ## - serasa_commercial_debts   1   3157.9 3181.9
+    ## - serasa_dishonored_checks  1   3165.1 3189.1
+    ## - age                       1   3166.2 3190.2
+    ## - cpf_restriction           1   3168.8 3192.8
+    ## - monthly_payment           1   3170.7 3194.7
+    ## - serasa_banking_debts      1   3174.6 3198.6
+    ## - collateral_debt_amount    1   3433.9 3457.9
+    ## 
+    ## Step:  AIC=3175.39
+    ## sent_to_analysis ~ age + collateral_value + loan_amount + collateral_debt_amount + 
+    ##     serasa_restriction + serasa_dishonored_checks + serasa_expired_debts + 
+    ##     serasa_banking_debts + serasa_commercial_debts + cpf_restriction + 
+    ##     monthly_payment
+    ## 
+    ##                            Df Deviance    AIC
+    ## - loan_amount               1   3151.5 3173.5
+    ## - collateral_value          1   3152.0 3174.0
+    ## <none>                          3151.4 3175.4
+    ## - serasa_restriction        1   3154.1 3176.1
+    ## - serasa_expired_debts      1   3154.2 3176.2
+    ## + monthly_income            1   3151.3 3177.3
+    ## + serasa_protests           1   3151.4 3177.4
+    ## + purpose                   1   3151.4 3177.4
+    ## - serasa_commercial_debts   1   3158.0 3180.0
+    ## - serasa_dishonored_checks  1   3165.1 3187.1
+    ## - age                       1   3166.3 3188.3
+    ## - cpf_restriction           1   3168.8 3190.8
+    ## - monthly_payment           1   3170.8 3192.8
+    ## - serasa_banking_debts      1   3174.7 3196.7
+    ## - collateral_debt_amount    1   3434.0 3456.0
+    ## 
+    ## Step:  AIC=3173.46
     ## sent_to_analysis ~ age + collateral_value + collateral_debt_amount + 
     ##     serasa_restriction + serasa_dishonored_checks + serasa_expired_debts + 
-    ##     serasa_banking_debts + serasa_commercial_debts + monthly_payment + 
-    ##     purpose
+    ##     serasa_banking_debts + serasa_commercial_debts + cpf_restriction + 
+    ##     monthly_payment
     ## 
     ##                            Df Deviance    AIC
-    ## - serasa_expired_debts      1   1371.9 1391.9
-    ## - purpose                   1   1372.7 1392.7
-    ## <none>                          1371.3 1393.3
-    ## - serasa_commercial_debts   1   1373.7 1393.7
-    ## + serasa_protests           1   1370.9 1394.9
-    ## + monthly_income            1   1371.0 1395.0
-    ## + loan_amount               1   1371.2 1395.2
-    ## - collateral_value          1   1375.3 1395.3
-    ## - serasa_dishonored_checks  1   1376.7 1396.7
-    ## - serasa_banking_debts      1   1378.8 1398.8
-    ## - serasa_restriction        1   1379.2 1399.2
-    ## - age                       1   1380.2 1400.2
-    ## - monthly_payment           1   1421.3 1441.3
-    ## - collateral_debt_amount    1   1445.9 1465.9
+    ## - collateral_value          1   3152.1 3172.1
+    ## <none>                          3151.5 3173.5
+    ## - serasa_restriction        1   3154.1 3174.1
+    ## - serasa_expired_debts      1   3154.2 3174.2
+    ## + loan_amount               1   3151.4 3175.4
+    ## + monthly_income            1   3151.4 3175.4
+    ## + serasa_protests           1   3151.4 3175.4
+    ## + purpose                   1   3151.5 3175.5
+    ## - serasa_commercial_debts   1   3158.0 3178.0
+    ## - serasa_dishonored_checks  1   3165.2 3185.2
+    ## - age                       1   3166.9 3186.9
+    ## - cpf_restriction           1   3168.9 3188.9
+    ## - serasa_banking_debts      1   3174.7 3194.7
+    ## - monthly_payment           1   3223.7 3243.7
+    ## - collateral_debt_amount    1   3434.4 3454.4
     ## 
-    ## Step:  AIC=1391.88
-    ## sent_to_analysis ~ age + collateral_value + collateral_debt_amount + 
-    ##     serasa_restriction + serasa_dishonored_checks + serasa_banking_debts + 
-    ##     serasa_commercial_debts + monthly_payment + purpose
-    ## 
-    ##                            Df Deviance    AIC
-    ## - purpose                   1   1373.3 1391.3
-    ## <none>                          1371.9 1391.9
-    ## - serasa_commercial_debts   1   1374.1 1392.1
-    ## + serasa_expired_debts      1   1371.3 1393.3
-    ## + monthly_income            1   1371.5 1393.5
-    ## + serasa_protests           1   1371.5 1393.5
-    ## + loan_amount               1   1371.8 1393.8
-    ## - collateral_value          1   1375.9 1393.9
-    ## - serasa_dishonored_checks  1   1377.2 1395.2
-    ## - serasa_banking_debts      1   1379.3 1397.3
-    ## - serasa_restriction        1   1380.5 1398.5
-    ## - age                       1   1380.8 1398.8
-    ## - monthly_payment           1   1421.8 1439.8
-    ## - collateral_debt_amount    1   1446.3 1464.3
-    ## 
-    ## Step:  AIC=1391.27
-    ## sent_to_analysis ~ age + collateral_value + collateral_debt_amount + 
-    ##     serasa_restriction + serasa_dishonored_checks + serasa_banking_debts + 
-    ##     serasa_commercial_debts + monthly_payment
+    ## Step:  AIC=3172.09
+    ## sent_to_analysis ~ age + collateral_debt_amount + serasa_restriction + 
+    ##     serasa_dishonored_checks + serasa_expired_debts + serasa_banking_debts + 
+    ##     serasa_commercial_debts + cpf_restriction + monthly_payment
     ## 
     ##                            Df Deviance    AIC
-    ## <none>                          1373.3 1391.3
-    ## - serasa_commercial_debts   1   1375.5 1391.5
-    ## + purpose                   1   1371.9 1391.9
-    ## + serasa_expired_debts      1   1372.7 1392.7
-    ## + serasa_protests           1   1372.8 1392.8
-    ## + monthly_income            1   1372.9 1392.9
-    ## - collateral_value          1   1377.1 1393.1
-    ## + loan_amount               1   1373.2 1393.2
-    ## - serasa_dishonored_checks  1   1378.7 1394.7
-    ## - serasa_banking_debts      1   1380.8 1396.8
-    ## - age                       1   1381.8 1397.8
-    ## - serasa_restriction        1   1381.8 1397.8
-    ## - monthly_payment           1   1423.7 1439.7
-    ## - collateral_debt_amount    1   1450.5 1466.5
+    ## <none>                          3152.1 3172.1
+    ## - serasa_restriction        1   3154.8 3172.8
+    ## - serasa_expired_debts      1   3154.8 3172.8
+    ## + collateral_value          1   3151.5 3173.5
+    ## + loan_amount               1   3152.0 3174.0
+    ## + monthly_income            1   3152.0 3174.0
+    ## + serasa_protests           1   3152.1 3174.1
+    ## + purpose                   1   3152.1 3174.1
+    ## - serasa_commercial_debts   1   3158.6 3176.6
+    ## - serasa_dishonored_checks  1   3165.9 3183.9
+    ## - age                       1   3167.4 3185.4
+    ## - cpf_restriction           1   3169.6 3187.6
+    ## - serasa_banking_debts      1   3175.4 3193.4
+    ## - monthly_payment           1   3224.1 3242.1
+    ## - collateral_debt_amount    1   3435.3 3453.3
 
 Após algumas iterações, observa-se que o conjunto de variáveis com o menor valor para o Critério de Informação de Akaike é:
 
@@ -800,36 +831,37 @@ summary(stepwise)
 
     ## 
     ## Call:
-    ## glm(formula = sent_to_analysis ~ age + collateral_value + collateral_debt_amount + 
-    ##     serasa_restriction + serasa_dishonored_checks + serasa_banking_debts + 
-    ##     serasa_commercial_debts + monthly_payment, family = binomial, 
-    ##     data = credit[i_calibration2, ])
+    ## glm(formula = sent_to_analysis ~ age + collateral_debt_amount + 
+    ##     serasa_restriction + serasa_dishonored_checks + serasa_expired_debts + 
+    ##     serasa_banking_debts + serasa_commercial_debts + cpf_restriction + 
+    ##     monthly_payment, family = binomial, data = treinamento)
     ## 
     ## Deviance Residuals: 
     ##     Min       1Q   Median       3Q      Max  
-    ## -2.0198  -0.9776  -0.3851   1.1451   3.0388  
+    ## -3.9419  -1.0056  -0.3024   1.1377   3.8502  
     ## 
     ## Coefficients:
     ##                            Estimate Std. Error z value Pr(>|z|)    
-    ## (Intercept)                 -0.9830     0.1793  -5.482 4.21e-08 ***
-    ## age                          1.5641     0.5380   2.907  0.00364 ** 
-    ## collateral_value          -298.4433   156.3562  -1.909  0.05630 .  
-    ## collateral_debt_amount   -1492.7110   250.2715  -5.964 2.46e-09 ***
-    ## serasa_restriction          -1.1533     0.4215  -2.736  0.00621 ** 
-    ## serasa_dishonored_checks   -13.9593   357.5786  -0.039  0.96886    
-    ## serasa_banking_debts        -2.2237     1.0638  -2.090  0.03658 *  
-    ## serasa_commercial_debts     -0.8448     0.5769  -1.464  0.14306    
-    ## monthly_payment             12.9010     2.1108   6.112 9.84e-10 ***
+    ## (Intercept)                 -0.8802     0.1073  -8.204 2.32e-16 ***
+    ## age                          1.3934     0.3564   3.909 9.26e-05 ***
+    ## collateral_debt_amount   -2553.5683   269.2969  -9.482  < 2e-16 ***
+    ## serasa_restriction          -0.4485     0.2784  -1.611 0.107212    
+    ## serasa_dishonored_checks   -14.9200   341.8568  -0.044 0.965188    
+    ## serasa_expired_debts       -15.2773   936.6078  -0.016 0.986986    
+    ## serasa_banking_debts        -2.3199     0.6242  -3.716 0.000202 ***
+    ## serasa_commercial_debts     -0.8998     0.3579  -2.514 0.011932 *  
+    ## cpf_restriction             -0.6452     0.1584  -4.073 4.64e-05 ***
+    ## monthly_payment              8.3186     1.0653   7.809 5.77e-15 ***
     ## ---
     ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
     ## 
     ## (Dispersion parameter for binomial family taken to be 1)
     ## 
-    ##     Null deviance: 1630.6  on 1247  degrees of freedom
-    ## Residual deviance: 1373.3  on 1239  degrees of freedom
-    ## AIC: 1391.3
+    ##     Null deviance: 3792.6  on 2910  degrees of freedom
+    ## Residual deviance: 3152.1  on 2901  degrees of freedom
+    ## AIC: 3172.1
     ## 
-    ## Number of Fisher Scoring iterations: 15
+    ## Number of Fisher Scoring iterations: 16
 
 Percebemos que nem todas as variáveis são significativas. Podemos excluir do modelo `serasa_dishonored_checks`, `serasa_commercial_debts` e todas as outras com p-value maior que 0.05. Na verdade as restrições ao crédito não são tão importantes para o modelo.
 
@@ -841,16 +873,17 @@ Em estatística, o odds ratio (OR) é uma das três principais maneiras de quant
 exp(cbind(OR = coef(stepwise), confint(stepwise)))
 ```
 
-    ##                                     OR         2.5 %        97.5 %
-    ## (Intercept)               3.742054e-01  2.626273e-01  5.306509e-01
-    ## age                       4.778351e+00  1.668670e+00  1.377305e+01
-    ## collateral_value         2.441869e-130 3.160640e-265  2.408640e-18
-    ## collateral_debt_amount    0.000000e+00  0.000000e+00  0.000000e+00
-    ## serasa_restriction        3.155797e-01  1.308029e-01  6.927503e-01
-    ## serasa_dishonored_checks  8.661014e-07  2.733914e-88 2.367183e-102
-    ## serasa_banking_debts      1.082062e-01  5.801335e-03  5.819761e-01
-    ## serasa_commercial_debts   4.296293e-01  1.312155e-01  1.302425e+00
-    ## monthly_payment           4.007067e+05  6.929441e+03  2.734586e+07
+    ##                                    OR         2.5 %        97.5 %
+    ## (Intercept)              4.147051e-01  3.356624e-01  5.111990e-01
+    ## age                      4.028478e+00  2.004372e+00  8.109737e+00
+    ## collateral_debt_amount   0.000000e+00  0.000000e+00  0.000000e+00
+    ## serasa_restriction       6.386082e-01  3.650817e-01  1.091569e+00
+    ## serasa_dishonored_checks 3.313794e-07 1.411807e-153 9.384392e-133
+    ## serasa_expired_debts     2.318116e-07            NA  1.364140e+26
+    ## serasa_banking_debts     9.828475e-02  2.293750e-02  2.878670e-01
+    ## serasa_commercial_debts  4.066436e-01  1.989280e-01  8.138304e-01
+    ## cpf_restriction          5.245558e-01  3.825079e-01  7.123603e-01
+    ## monthly_payment          4.099329e+03  5.262134e+02  3.423316e+04
 
 A ideia agora é construir o(s) modelo(s) de Credit Scoring com o DataFrame "credit" e em seguida avaliar o ajuste com o DataFrame "validacao".
 
@@ -869,20 +902,20 @@ table(predito,validacao$sent_to_analysis)
 
     ##        
     ## predito   0   1
-    ##       0 798 429
-    ##       1   5  16
+    ##       0 785 454
+    ##       1   3   6
 
 A taxa de acerto é:
 
 $$
-Tx = \\frac {798+16}{1248}
+Tx = \\frac {797+4}{1248}
 $$
 
 ``` r
 (table(predito,validacao$sent_to_analysis)[1]+table(predito,validacao$sent_to_analysis)[4])/ (table(predito,validacao$sent_to_analysis)[1]+table(predito,validacao$sent_to_analysis)[2]+table(predito,validacao$sent_to_analysis)[3]+table(predito,validacao$sent_to_analysis)[4])
 ```
 
-    ## [1] 0.6522436
+    ## [1] 0.6338141
 
 Podemos melhorar a taxa de acerto refinando o modelo por meio da exclusão de variáveis não significantes e pela inclusão de componentes estatisticamente significantes.
 
@@ -893,19 +926,19 @@ Usando o AIC e Maximum likelihood
 logLik(modelo.completo)
 ```
 
-    ## 'log Lik.' -1574.788 (df=14)
+    ## 'log Lik.' -1575.659 (df=15)
 
 ``` r
 logLik(LogisticModel.1)
 ```
 
-    ## 'log Lik.' -819.4182 (df=14)
+    ## 'log Lik.' -815.9838 (df=15)
 
 ``` r
 logLik(LogisticModel.3)
 ```
 
-    ## 'log Lik.' -685.2237 (df=14)
+    ## 'log Lik.' -678.054 (df=15)
 
 Então temos o valor do modelo que sabemos que é o correto de −1590.07, enquanto o modelo mais simples sem as variáveis `education_level` e `marital_status` (e errado) foi de -801.05. O modelo, também completo, vemos então que quanto melhor o ajuste (e teoricamente melhor o modelo) temos um valor maior de logLik.
 
@@ -913,19 +946,19 @@ Então temos o valor do modelo que sabemos que é o correto de −1590.07, enqua
 extractAIC(modelo.completo)
 ```
 
-    ## [1]   14.000 3177.577
+    ## [1]   15.000 3181.319
 
 ``` r
 extractAIC(LogisticModel.1)
 ```
 
-    ## [1]   14.000 1666.836
+    ## [1]   15.000 1661.968
 
 ``` r
 extractAIC(LogisticModel.3)
 ```
 
-    ## [1]   14.000 1398.447
+    ## [1]   15.000 1386.108
 
 Agora o modelo 1, com 2 parâmetros a menos tem um valor mais alto de 3247 enquanto o modelo 3 (que sabemos que é o correto) tem um parâmetro e o valor de 1630 de AIC, mas o *modelo completo* tem o menor valor, então valores menores devem ser bons. Somos inclinados a usar o modelo completo que tem os 2 parâmetros, intercepto e inclinação.
 
@@ -941,16 +974,17 @@ anova(LogisticModel.1,LogisticModel.3)
     ##     loan_amount + collateral_debt_amount + serasa_restriction + 
     ##     serasa_dishonored_checks + serasa_expired_debts + serasa_banking_debts + 
     ##     serasa_commercial_debts + serasa_protests + marital_status + 
-    ##     monthly_payment + purpose + education_level) - education_level - 
-    ##     marital_status
+    ##     cpf_restriction + loan_term + monthly_payment + purpose + 
+    ##     education_level) - education_level - marital_status - loan_term
     ## Model 2: sent_to_analysis ~ age + monthly_income + collateral_value + 
     ##     loan_amount + collateral_debt_amount + serasa_restriction + 
     ##     serasa_dishonored_checks + serasa_expired_debts + serasa_banking_debts + 
     ##     serasa_commercial_debts + serasa_protests + marital_status + 
-    ##     monthly_payment + purpose + education_level
+    ##     cpf_restriction + loan_term + monthly_payment + purpose + 
+    ##     education_level
     ##   Resid. Df Resid. Dev Df Deviance
-    ## 1      1234     752.84            
-    ## 2      1234    1370.45  0  -617.61
+    ## 1      1233     717.97            
+    ## 2      1233    1356.11  0  -638.14
 
 Existem diferenças entre os modelos, então ficamos com aquele com mais parâmetros, o modelo 1, o mais complexo, não podemos abandonar ele pelo mais simples, ja que ele explica muita coisa que o modelo 2 mais simples não deu conta de explicar, mas não podemos esquecer que:
 
@@ -966,137 +1000,169 @@ ps(trace=1 e nesse caso o direction=”backward” são os default da função)
 mod.final3 <- step(LogisticModel.3)
 ```
 
-    ## Start:  AIC=1398.45
+    ## Start:  AIC=1386.11
     ## sent_to_analysis ~ age + monthly_income + collateral_value + 
     ##     loan_amount + collateral_debt_amount + serasa_restriction + 
     ##     serasa_dishonored_checks + serasa_expired_debts + serasa_banking_debts + 
     ##     serasa_commercial_debts + serasa_protests + marital_status + 
-    ##     monthly_payment + purpose + education_level
+    ##     cpf_restriction + loan_term + monthly_payment + purpose + 
+    ##     education_level
     ## 
     ## 
-    ## Step:  AIC=1398.45
+    ## Step:  AIC=1386.11
     ## sent_to_analysis ~ age + monthly_income + collateral_value + 
     ##     loan_amount + collateral_debt_amount + serasa_restriction + 
     ##     serasa_dishonored_checks + serasa_expired_debts + serasa_banking_debts + 
     ##     serasa_commercial_debts + serasa_protests + marital_status + 
+    ##     cpf_restriction + loan_term + monthly_payment + purpose
+    ## 
+    ## 
+    ## Step:  AIC=1386.11
+    ## sent_to_analysis ~ age + monthly_income + collateral_value + 
+    ##     loan_amount + collateral_debt_amount + serasa_restriction + 
+    ##     serasa_dishonored_checks + serasa_expired_debts + serasa_banking_debts + 
+    ##     serasa_commercial_debts + serasa_protests + marital_status + 
+    ##     cpf_restriction + monthly_payment + purpose
+    ## 
+    ## 
+    ## Step:  AIC=1386.11
+    ## sent_to_analysis ~ age + monthly_income + collateral_value + 
+    ##     loan_amount + collateral_debt_amount + serasa_restriction + 
+    ##     serasa_dishonored_checks + serasa_expired_debts + serasa_banking_debts + 
+    ##     serasa_commercial_debts + serasa_protests + cpf_restriction + 
     ##     monthly_payment + purpose
     ## 
-    ## 
-    ## Step:  AIC=1398.45
-    ## sent_to_analysis ~ age + monthly_income + collateral_value + 
-    ##     loan_amount + collateral_debt_amount + serasa_restriction + 
-    ##     serasa_dishonored_checks + serasa_expired_debts + serasa_banking_debts + 
-    ##     serasa_commercial_debts + serasa_protests + monthly_payment + 
-    ##     purpose
-    ## 
     ##                            Df Deviance    AIC
-    ## - loan_amount               1   1370.5 1396.5
-    ## - monthly_income            1   1370.8 1396.8
-    ## - serasa_protests           1   1370.9 1396.9
-    ## - serasa_expired_debts      1   1371.1 1397.1
-    ## - purpose                   1   1371.8 1397.8
-    ## <none>                          1370.5 1398.5
-    ## - serasa_commercial_debts   1   1373.2 1399.2
-    ## - collateral_value          1   1373.9 1399.9
-    ## - serasa_dishonored_checks  1   1375.7 1401.7
-    ## - serasa_restriction        1   1375.8 1401.8
-    ## - serasa_banking_debts      1   1378.2 1404.2
-    ## - age                       1   1379.7 1405.7
-    ## - monthly_payment           1   1390.5 1416.5
-    ## - collateral_debt_amount    1   1444.2 1470.2
+    ## - loan_amount               1   1356.2 1384.2
+    ## - serasa_protests           1   1356.3 1384.3
+    ## - monthly_income            1   1356.4 1384.4
+    ## - purpose                   1   1356.6 1384.6
+    ## - serasa_expired_debts      1   1356.9 1384.9
+    ## - serasa_commercial_debts   1   1358.1 1386.1
+    ## <none>                          1356.1 1386.1
+    ## - serasa_restriction        1   1359.9 1387.9
+    ## - collateral_value          1   1360.0 1388.0
+    ## - serasa_dishonored_checks  1   1360.3 1388.3
+    ## - serasa_banking_debts      1   1360.6 1388.6
+    ## - age                       1   1366.0 1394.0
+    ## - cpf_restriction           1   1370.5 1398.5
+    ## - monthly_payment           1   1374.2 1402.2
+    ## - collateral_debt_amount    1   1429.3 1457.3
     ## 
-    ## Step:  AIC=1396.53
+    ## Step:  AIC=1384.15
     ## sent_to_analysis ~ age + monthly_income + collateral_value + 
     ##     collateral_debt_amount + serasa_restriction + serasa_dishonored_checks + 
     ##     serasa_expired_debts + serasa_banking_debts + serasa_commercial_debts + 
-    ##     serasa_protests + monthly_payment + purpose
+    ##     serasa_protests + cpf_restriction + monthly_payment + purpose
     ## 
     ##                            Df Deviance    AIC
-    ## - monthly_income            1   1370.9 1394.9
-    ## - serasa_protests           1   1371.0 1395.0
-    ## - serasa_expired_debts      1   1371.1 1395.1
-    ## - purpose                   1   1371.9 1395.9
-    ## <none>                          1370.5 1396.5
-    ## - serasa_commercial_debts   1   1373.2 1397.2
-    ## - collateral_value          1   1374.6 1398.6
-    ## - serasa_dishonored_checks  1   1375.8 1399.8
-    ## - serasa_restriction        1   1376.0 1400.0
-    ## - serasa_banking_debts      1   1378.3 1402.3
-    ## - age                       1   1379.7 1403.7
-    ## - monthly_payment           1   1420.4 1444.4
-    ## - collateral_debt_amount    1   1444.7 1468.7
+    ## - serasa_protests           1   1356.3 1382.3
+    ## - monthly_income            1   1356.5 1382.5
+    ## - purpose                   1   1356.7 1382.7
+    ## - serasa_expired_debts      1   1356.9 1382.9
+    ## - serasa_commercial_debts   1   1358.1 1384.1
+    ## <none>                          1356.2 1384.2
+    ## - serasa_restriction        1   1360.0 1386.0
+    ## - serasa_dishonored_checks  1   1360.3 1386.3
+    ## - collateral_value          1   1360.6 1386.6
+    ## - serasa_banking_debts      1   1360.7 1386.7
+    ## - age                       1   1366.0 1392.0
+    ## - cpf_restriction           1   1370.5 1396.5
+    ## - monthly_payment           1   1401.2 1427.2
+    ## - collateral_debt_amount    1   1429.7 1455.7
     ## 
-    ## Step:  AIC=1394.91
+    ## Step:  AIC=1382.32
+    ## sent_to_analysis ~ age + monthly_income + collateral_value + 
+    ##     collateral_debt_amount + serasa_restriction + serasa_dishonored_checks + 
+    ##     serasa_expired_debts + serasa_banking_debts + serasa_commercial_debts + 
+    ##     cpf_restriction + monthly_payment + purpose
+    ## 
+    ##                            Df Deviance    AIC
+    ## - monthly_income            1   1356.6 1380.6
+    ## - purpose                   1   1356.9 1380.9
+    ## - serasa_expired_debts      1   1357.0 1381.0
+    ## - serasa_commercial_debts   1   1358.1 1382.1
+    ## <none>                          1356.3 1382.3
+    ## - serasa_dishonored_checks  1   1360.5 1384.5
+    ## - serasa_banking_debts      1   1360.7 1384.7
+    ## - collateral_value          1   1360.8 1384.8
+    ## - serasa_restriction        1   1361.4 1385.4
+    ## - age                       1   1366.2 1390.2
+    ## - cpf_restriction           1   1371.0 1395.0
+    ## - monthly_payment           1   1401.3 1425.3
+    ## - collateral_debt_amount    1   1429.8 1453.8
+    ## 
+    ## Step:  AIC=1380.62
     ## sent_to_analysis ~ age + collateral_value + collateral_debt_amount + 
     ##     serasa_restriction + serasa_dishonored_checks + serasa_expired_debts + 
-    ##     serasa_banking_debts + serasa_commercial_debts + serasa_protests + 
+    ##     serasa_banking_debts + serasa_commercial_debts + cpf_restriction + 
     ##     monthly_payment + purpose
     ## 
     ##                            Df Deviance    AIC
-    ## - serasa_protests           1   1371.3 1393.3
-    ## - serasa_expired_debts      1   1371.5 1393.5
-    ## - purpose                   1   1372.2 1394.2
-    ## <none>                          1370.9 1394.9
-    ## - serasa_commercial_debts   1   1373.6 1395.6
-    ## - collateral_value          1   1374.9 1396.9
-    ## - serasa_dishonored_checks  1   1376.2 1398.2
-    ## - serasa_restriction        1   1376.3 1398.3
-    ## - serasa_banking_debts      1   1378.7 1400.7
-    ## - age                       1   1379.9 1401.9
-    ## - monthly_payment           1   1420.8 1442.8
-    ## - collateral_debt_amount    1   1445.5 1467.5
+    ## - purpose                   1   1357.2 1379.2
+    ## - serasa_expired_debts      1   1357.3 1379.3
+    ## - serasa_commercial_debts   1   1358.5 1380.5
+    ## <none>                          1356.6 1380.6
+    ## - serasa_dishonored_checks  1   1360.8 1382.8
+    ## - collateral_value          1   1361.0 1383.0
+    ## - serasa_banking_debts      1   1361.0 1383.0
+    ## - serasa_restriction        1   1361.7 1383.7
+    ## - age                       1   1366.3 1388.3
+    ## - cpf_restriction           1   1371.3 1393.3
+    ## - monthly_payment           1   1401.6 1423.6
+    ## - collateral_debt_amount    1   1430.5 1452.5
     ## 
-    ## Step:  AIC=1393.33
+    ## Step:  AIC=1379.15
     ## sent_to_analysis ~ age + collateral_value + collateral_debt_amount + 
     ##     serasa_restriction + serasa_dishonored_checks + serasa_expired_debts + 
-    ##     serasa_banking_debts + serasa_commercial_debts + monthly_payment + 
-    ##     purpose
+    ##     serasa_banking_debts + serasa_commercial_debts + cpf_restriction + 
+    ##     monthly_payment
     ## 
     ##                            Df Deviance    AIC
-    ## - serasa_expired_debts      1   1371.9 1391.9
-    ## - purpose                   1   1372.7 1392.7
-    ## <none>                          1371.3 1393.3
-    ## - serasa_commercial_debts   1   1373.7 1393.7
-    ## - collateral_value          1   1375.3 1395.3
-    ## - serasa_dishonored_checks  1   1376.7 1396.7
-    ## - serasa_banking_debts      1   1378.8 1398.8
-    ## - serasa_restriction        1   1379.2 1399.2
-    ## - age                       1   1380.2 1400.2
-    ## - monthly_payment           1   1421.3 1441.3
-    ## - collateral_debt_amount    1   1445.9 1465.9
+    ## - serasa_expired_debts      1   1357.9 1377.9
+    ## - serasa_commercial_debts   1   1359.0 1379.0
+    ## <none>                          1357.2 1379.2
+    ## - serasa_dishonored_checks  1   1361.3 1381.3
+    ## - collateral_value          1   1361.5 1381.5
+    ## - serasa_banking_debts      1   1361.6 1381.6
+    ## - serasa_restriction        1   1362.1 1382.1
+    ## - age                       1   1366.5 1386.5
+    ## - cpf_restriction           1   1372.7 1392.7
+    ## - monthly_payment           1   1402.3 1422.3
+    ## - collateral_debt_amount    1   1433.0 1453.0
     ## 
-    ## Step:  AIC=1391.88
+    ## Step:  AIC=1377.88
     ## sent_to_analysis ~ age + collateral_value + collateral_debt_amount + 
     ##     serasa_restriction + serasa_dishonored_checks + serasa_banking_debts + 
-    ##     serasa_commercial_debts + monthly_payment + purpose
+    ##     serasa_commercial_debts + cpf_restriction + monthly_payment
     ## 
     ##                            Df Deviance    AIC
-    ## - purpose                   1   1373.3 1391.3
-    ## <none>                          1371.9 1391.9
-    ## - serasa_commercial_debts   1   1374.1 1392.1
-    ## - collateral_value          1   1375.9 1393.9
-    ## - serasa_dishonored_checks  1   1377.2 1395.2
-    ## - serasa_banking_debts      1   1379.3 1397.3
-    ## - serasa_restriction        1   1380.5 1398.5
-    ## - age                       1   1380.8 1398.8
-    ## - monthly_payment           1   1421.8 1439.8
-    ## - collateral_debt_amount    1   1446.3 1464.3
+    ## - serasa_commercial_debts   1   1359.5 1377.5
+    ## <none>                          1357.9 1377.9
+    ## - serasa_dishonored_checks  1   1362.1 1380.1
+    ## - collateral_value          1   1362.2 1380.2
+    ## - serasa_banking_debts      1   1362.3 1380.3
+    ## - serasa_restriction        1   1363.6 1381.6
+    ## - age                       1   1367.3 1385.3
+    ## - cpf_restriction           1   1373.3 1391.3
+    ## - monthly_payment           1   1403.0 1421.0
+    ## - collateral_debt_amount    1   1433.6 1451.6
     ## 
-    ## Step:  AIC=1391.27
+    ## Step:  AIC=1377.52
     ## sent_to_analysis ~ age + collateral_value + collateral_debt_amount + 
     ##     serasa_restriction + serasa_dishonored_checks + serasa_banking_debts + 
-    ##     serasa_commercial_debts + monthly_payment
+    ##     cpf_restriction + monthly_payment
     ## 
     ##                            Df Deviance    AIC
-    ## <none>                          1373.3 1391.3
-    ## - serasa_commercial_debts   1   1375.5 1391.5
-    ## - collateral_value          1   1377.1 1393.1
-    ## - serasa_dishonored_checks  1   1378.7 1394.7
-    ## - serasa_banking_debts      1   1380.8 1396.8
-    ## - age                       1   1381.8 1397.8
-    ## - serasa_restriction        1   1381.8 1397.8
-    ## - monthly_payment           1   1423.7 1439.7
-    ## - collateral_debt_amount    1   1450.5 1466.5
+    ## <none>                          1359.5 1377.5
+    ## - serasa_banking_debts      1   1363.3 1379.3
+    ## - serasa_dishonored_checks  1   1363.5 1379.5
+    ## - collateral_value          1   1364.1 1380.1
+    ## - age                       1   1369.4 1385.4
+    ## - cpf_restriction           1   1375.5 1391.5
+    ## - serasa_restriction        1   1379.9 1395.9
+    ## - monthly_payment           1   1404.6 1420.6
+    ## - collateral_debt_amount    1   1434.9 1450.9
 
 ``` r
 mod.final3
@@ -1105,24 +1171,24 @@ mod.final3
     ## 
     ## Call:  glm(formula = sent_to_analysis ~ age + collateral_value + collateral_debt_amount + 
     ##     serasa_restriction + serasa_dishonored_checks + serasa_banking_debts + 
-    ##     serasa_commercial_debts + monthly_payment, family = binomial, 
-    ##     data = credit[i_calibration2, ])
+    ##     cpf_restriction + monthly_payment, family = binomial, data = credit[i_calibration2, 
+    ##     ])
     ## 
     ## Coefficients:
     ##              (Intercept)                       age  
-    ##                  -0.9830                    1.5641  
+    ##                  -0.8795                    1.6995  
     ##         collateral_value    collateral_debt_amount  
-    ##                -298.4433                -1492.7110  
+    ##                -322.5898                -1486.1426  
     ##       serasa_restriction  serasa_dishonored_checks  
-    ##                  -1.1533                  -13.9593  
-    ##     serasa_banking_debts   serasa_commercial_debts  
-    ##                  -2.2237                   -0.8448  
+    ##                  -1.3452                  -13.6483  
+    ##     serasa_banking_debts           cpf_restriction  
+    ##                  -1.6705                   -0.8639  
     ##          monthly_payment  
-    ##                  12.9010  
+    ##                  12.4376  
     ## 
     ## Degrees of Freedom: 1247 Total (i.e. Null);  1239 Residual
     ## Null Deviance:       1631 
-    ## Residual Deviance: 1373  AIC: 1391
+    ## Residual Deviance: 1360  AIC: 1378
 
 Precisamos de uma boa linha de base que crie "o melhor modelo simples" que traga um equilíbrio entre a melhor precisão possível com um modelo que ainda é simples o suficiente para entender.
 
@@ -1131,15 +1197,15 @@ coefficients(LogisticModel.1) * 20/log(2)
 ```
 
     ##              (Intercept)                      age           monthly_income 
-    ##               -30.254533                21.937516               -51.120953 
+    ##            -2.583657e+01             1.753497e+01            -1.636497e+02 
     ##         collateral_value              loan_amount   collateral_debt_amount 
-    ##                19.870600               -56.046783            -44326.605163 
+    ##            -7.233061e+03             4.520455e+01            -4.983318e+04 
     ##       serasa_restriction serasa_dishonored_checks     serasa_expired_debts 
-    ##                -8.946798              -425.783275                -2.510972 
+    ##            -1.017519e+01            -4.229147e+02            -4.091409e+02 
     ##     serasa_banking_debts  serasa_commercial_debts          serasa_protests 
-    ##              -466.969441               -17.054072                -4.522727 
-    ##          monthly_payment                  purpose 
-    ##                95.167582                -2.502050
+    ##            -6.602604e+01            -2.595552e+01             2.569878e+01 
+    ##          cpf_restriction          monthly_payment                  purpose 
+    ##            -1.063907e+01             1.154705e+02            -5.143048e-01
 
 Uma nova abordagem de um novo modelo
 ------------------------------------
@@ -1169,6 +1235,8 @@ modelOne <- OneR(credit, verbose = TRUE)
     ## 1   serasa_commercial_debts  100%    
     ## 1   serasa_protests          100%    
     ## 1   marital_status           100%    
+    ## 1   cpf_restriction          100%    
+    ## 1   loan_term                100%    
     ## 1   monthly_payment          100%    
     ## 1   purpose                  100%    
     ## 1   sent_to_analysis         100%    
@@ -1180,7 +1248,7 @@ Agora sem a variável:
 
 ``` r
 library("OneR")
-modelOne <- OneR(credit[,-16], verbose = TRUE)
+modelOne <- OneR(credit[,-18], verbose = TRUE)
 ```
 
     ## 
@@ -1198,6 +1266,8 @@ modelOne <- OneR(credit[,-16], verbose = TRUE)
     ## 3   serasa_commercial_debts  63.98%  
     ## 3   serasa_protests          63.98%  
     ## 3   marital_status           63.98%  
+    ## 3   cpf_restriction          63.98%  
+    ## 3   loan_term                63.98%  
     ## 3   purpose                  63.98%  
     ## ---
     ## Chosen attribute due to accuracy
@@ -1211,7 +1281,7 @@ summary(modelOne)
 
     ## 
     ## Call:
-    ## OneR.data.frame(x = credit[, -16], verbose = TRUE)
+    ## OneR.data.frame(x = credit[, -18], verbose = TRUE)
     ## 
     ## Rules:
     ## If monthly_payment = (0.0044,0.204] then sent_to_analysis = 0
@@ -1253,13 +1323,13 @@ plot(modelOne)
 **Usando o modelo para prever dados**
 
 ``` r
-prediction <- predict(modelOne, credit[,c(1:5,12:14,16)])
+prediction <- predict(modelOne, credit[,c(1:5,12:15,18)])
 ```
 
 **Avaliando as estatísticas de previsão**
 
 ``` r
-eval_model(prediction, credit[,c(1:5,12:14,16)])
+eval_model(prediction, credit[,c(1:5,12:15,18)])
 ```
 
     ## 

@@ -136,13 +136,13 @@ Vamos então retirar algumas colunas para um novo dataset para o processamento, 
 
 ```{r, message=FALSE, warning=FALSE}
 credit <- ndf
-credit[,c(1,2,7,8,17,18,21:25,27:33,35,36)] <- NULL
+credit[,c(1,2,7,8,21:25,27:33,35,36)] <- NULL
 dim(credit)[1]
-remove(ndf)
+#remove(ndf)
 ```
 
 ```{r, message=FALSE, warning=FALSE}
-summary(credit[,c(1:5,13,14)])
+summary(credit[,c(1:5,14:16,18)])
 ```
 
 Nesta fase vamos apenas entender se existe valores do tipo outliers. Não vamos avaliar as medidas de tendência central da coluna `sent_to_analysis`. Observando os valores acima é fácil perceber que alguns clientes digitaram informações aparentemente inconsistentes, como por exemplo, o `monthly_payment`. Valores zero e outros muito acima da média, o que podemos considerar outliers. O mesmo vale para a idade. O mesmo ocorre com `loan_term`, vamos retirar esses valores faltantes.
@@ -162,8 +162,9 @@ credit$purpose <- standValue(credit$purpose)
 credit$age <- standValue(credit$age)
 credit$education_level <- standValue(credit$education_level)
 credit$marital_status <- standValue(credit$marital_status)
+credit$monthly_payment <- standValue(credit$monthly_payment)
 
-summary(credit[,c(1:5,13,14)])
+summary(credit[,c(1:5,14:16,18)])
 ```
 
 Agora com os dados normalizados passamos para a próxima fase.
@@ -202,8 +203,8 @@ Os valores acima ordenados por `collateral_value` mostram que o valor máximo é
 Comparando todas as variáveis com e sem os outliers
 
 ```{r, message=FALSE, warning=FALSE}
-boxplot(credit[,c(1:5,13:14)])
-boxplot(credit[,c(1:5,13:14)],outline = FALSE)
+boxplot(credit[,c(2:5,14:15)])
+boxplot(credit[,c(2:5,14:15)],outline = FALSE)
 ```
 
 
@@ -276,14 +277,14 @@ Vamos criar vários modelos, por isso é necessário dar-lhes designações num�
 
 Nesta fase, realizaremos uma regressão logística usando a função glm(). Começamos com o conjunto de práticas, i_calibration1. Aqui, seremos seletivos com as variáveis que usamos no modelo. Vamos mudar isso um pouco, mas, por enquanto, usaremos apenas cinco para determinar o valor da credibilidade.
 
-**OBS:** retiramos do modelo as variáveis `education_level` e `marital_status`, essas variáveis deixam o modelo instável e *uma predição a partir de um ajuste `rank-deficient` pode ser enganoso*.
+**OBS:** retiramos do modelo as variáveis `education_level`, `loan_term` e `marital_status`, essas variáveis deixam o modelo instável e *uma predição a partir de um ajuste `rank-deficient` pode ser enganoso*.
 
 ```{r GLM create_test, message=FALSE}
 i_test1 <- sort(sample(1:nrow(credit), size = dim(credit)[1]*.7))
 
 i_calibration1 <- (1:nrow(credit))[-i_test1]
 set.seed(1)
-LogisticModel.1 <- glm(sent_to_analysis ~ . -education_level -marital_status, 
+LogisticModel.1 <- glm(sent_to_analysis ~ . -education_level -marital_status -loan_term, 
                        family = poisson(link = "log"),data = credit[i_calibration1, ])
 ```
         
@@ -499,7 +500,7 @@ Vamos usar a biblioteca MASS para calcular intervalos de confiança a partir de 
 
 ```{r message=FALSE, warning=FALSE}
 library("MASS")
-stepwise <- stepAIC(LogisticModel.3,direction="both")
+stepwise <- stepAIC(modelo.completo,direction="both")
 ```
 
 
@@ -539,7 +540,7 @@ table(predito,validacao$sent_to_analysis)
 A taxa de acerto é:
 
 $$
-Tx = \frac {798+16}{1248}
+Tx = \frac {797+4}{1248}
 $$
 ```{r, message=FALSE, warning=FALSE}
 (table(predito,validacao$sent_to_analysis)[1]+table(predito,validacao$sent_to_analysis)[4])/ (table(predito,validacao$sent_to_analysis)[1]+table(predito,validacao$sent_to_analysis)[2]+table(predito,validacao$sent_to_analysis)[3]+table(predito,validacao$sent_to_analysis)[4])
@@ -620,7 +621,7 @@ Agora sem a variável:
 
 ```{r, message=FALSE, warning=FALSE}
 library("OneR")
-modelOne <- OneR(credit[,-16], verbose = TRUE)
+modelOne <- OneR(credit[,-18], verbose = TRUE)
 
 ```
 
@@ -641,13 +642,13 @@ plot(modelOne)
 **Usando o modelo para prever dados**
 
 ```{r, message=FALSE, warning=FALSE}
-prediction <- predict(modelOne, credit[,c(1:5,12:14,16)])
+prediction <- predict(modelOne, credit[,c(1:5,12:15,18)])
 ```
 
 **Avaliando as estatísticas de previsão**
 
 ```{r, message=FALSE, warning=FALSE}
-eval_model(prediction, credit[,c(1:5,12:14,16)])
+eval_model(prediction, credit[,c(1:5,12:15,18)])
 ```
 
 Sim, esse modelo com 98,4% é o modelo ideal para classificação de crédito com garantia de automóvel. Vale lembrar que a cada novo dado o modelo precisa ser treinado novamente par uma melhor previsão.
