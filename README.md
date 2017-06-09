@@ -438,7 +438,7 @@ AUCLog1 <- performance(pred1, measure = 'auc')@y.values[[1]]
 AUCLog1
 ```
 
-    ## [1] 0.7594071
+    ## [1] 0.7500528
 
 Esse não é um resultado ruim, mas vamos ver se podemos fazer melhor com um método diferente.
 
@@ -478,7 +478,7 @@ AUCTree <- performance(pred3, measure = 'auc')@y.values[[1]]
 AUCTree
 ```
 
-    ## [1] 0.7234416
+    ## [1] 0.7155061
 
 O resultado foi pior do que o anterior. E ambos não são resultados satisfatórios, dada a complexidade do nosso modelo de árvore, então, novamente, temos que nos perguntar se não estamos melhor usando o modelo de Regressão Logística mais simples do primeiro modelo.
 
@@ -508,7 +508,7 @@ AUCRF <- performance(pred4, measure = 'auc')@y.values[[1]]
 AUCRF
 ```
 
-    ## [1] 0.7492171
+    ## [1] 0.7496038
 
 Com o esforço extra, ainda assim não obtemos um resultado um tanto melhorado. O modelo de Regressão logística é o melhor desempenho até o momento.
 
@@ -899,7 +899,7 @@ logLik(modelo.completo)
 logLik(LogisticModel.1)
 ```
 
-    ## 'log Lik.' -798.2274 (df=14)
+    ## 'log Lik.' -813.27 (df=14)
 
 ``` r
 logLik(LogisticModel.3)
@@ -919,7 +919,7 @@ extractAIC(modelo.completo)
 extractAIC(LogisticModel.1)
 ```
 
-    ## [1]   14.000 1624.455
+    ## [1]   14.00 1654.54
 
 ``` r
 extractAIC(LogisticModel.3)
@@ -949,8 +949,8 @@ anova(LogisticModel.1,LogisticModel.3)
     ##     serasa_commercial_debts + serasa_protests + marital_status + 
     ##     monthly_payment + purpose + education_level
     ##   Resid. Df Resid. Dev Df Deviance
-    ## 1      1234     726.45            
-    ## 2      1234    1370.45  0  -643.99
+    ## 1      1234     720.54            
+    ## 2      1234    1370.45  0  -649.91
 
 Existem diferenças entre os modelos, então ficamos com aquele com mais parâmetros, o modelo 1, o mais complexo, não podemos abandonar ele pelo mais simples, ja que ele explica muita coisa que o modelo 2 mais simples não deu conta de explicar, mas não podemos esquecer que:
 
@@ -1124,27 +1124,29 @@ mod.final3
     ## Null Deviance:       1631 
     ## Residual Deviance: 1373  AIC: 1391
 
-Precisamos de uma boa linha de base que crie "o melhor modelo simples" que traga um equilíbrio entre a melhor precisão possível com um modelo que ainda é simples o suficiente para entender: desenvolvi o pacote OneR para encontrar esse ponto e, assim, estabelecer uma nova linha de base Para modelos de classificação em Aprendizado de Máquinas (ML).
-
-O pacote `OneR` está preenchendo uma lacuna de longa data porque apenas uma implementação baseada em JAVA estava disponível até agora (pacote RWeka como uma interface para a classe OneR JAVA). Além disso, vários aprimoramentos foram feitos.
+Precisamos de uma boa linha de base que crie "o melhor modelo simples" que traga um equilíbrio entre a melhor precisão possível com um modelo que ainda é simples o suficiente para entender.
 
 ``` r
 coefficients(LogisticModel.1) * 20/log(2)
 ```
 
     ##              (Intercept)                      age           monthly_income 
-    ##            -3.266039e+01             1.562151e+01             3.847865e+01 
+    ##            -3.243942e+01             3.198618e+01            -2.702324e+02 
     ##         collateral_value              loan_amount   collateral_debt_amount 
-    ##            -4.806602e+02             6.491526e+01            -4.741588e+04 
+    ##            -2.188574e+03             3.408626e+01            -8.703873e+04 
     ##       serasa_restriction serasa_dishonored_checks     serasa_expired_debts 
-    ##            -2.280014e+01            -4.060068e+02            -3.944449e+02 
+    ##            -1.996582e+01            -4.392602e+02            -3.965658e+02 
     ##     serasa_banking_debts  serasa_commercial_debts          serasa_protests 
-    ##            -6.996357e+01            -8.087972e-01            -1.117296e+01 
+    ##            -5.059458e+01            -4.212423e+00             9.623641e+00 
     ##          monthly_payment                  purpose 
-    ##             6.321420e+01             4.103012e-02
+    ##             6.952592e+01             3.049794e-01
 
-Uma nova abordagem
-------------------
+Uma nova abordagem de um novo modelo
+------------------------------------
+
+O pacote OneR serve para encontrar esse ponto e, assim, estabelecer uma nova linha de base Para modelos de classificação em Aprendizado de Máquinas (ML).
+
+O pacote `OneR` está preenchendo uma lacuna de longa data porque apenas uma implementação baseada em JAVA estava disponível até agora (pacote RWeka como uma interface para a classe OneR JAVA). Além disso, vários aprimoramentos foram feitos.
 
 Agora vamos usar o pacote `OneR` e comparar. Mas na criação do modelo vamos ignorar a coluna `educarion_level`, essa coluna apenas prejudica o modelo. Em uma versão de teste os resultados foram muito abaixo do esperado. Veja abaixo o exemplo com essa variável.
 

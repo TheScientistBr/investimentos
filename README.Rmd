@@ -593,16 +593,18 @@ mod.final3 <- step(LogisticModel.3)
 mod.final3
 ```
 
-Precisamos de uma boa linha de base que crie "o melhor modelo simples" que traga um equilíbrio entre a melhor precisão possível com um modelo que ainda é simples o suficiente para entender: desenvolvi o pacote OneR para encontrar esse ponto e, assim, estabelecer uma nova linha de base Para modelos de classificação em Aprendizado de Máquinas (ML).
-
-O pacote `OneR` está preenchendo uma lacuna de longa data porque apenas uma implementação baseada em JAVA estava disponível até agora (pacote RWeka como uma interface para a classe OneR JAVA). Além disso, vários aprimoramentos foram feitos.
+Precisamos de uma boa linha de base que crie "o melhor modelo simples" que traga um equilíbrio entre a melhor precisão possível com um modelo que ainda é simples o suficiente para entender. 
 
 
 ```{r, message=FALSE, warning=FALSE}
 coefficients(LogisticModel.1) * 20/log(2)
 ```
 
-## Uma nova abordagem
+## Uma nova abordagem de um novo modelo
+
+O pacote OneR serve para encontrar esse ponto e, assim, estabelecer uma nova linha de base Para modelos de classificação em Aprendizado de Máquinas (ML).
+
+O pacote `OneR` está preenchendo uma lacuna de longa data porque apenas uma implementação baseada em JAVA estava disponível até agora (pacote RWeka como uma interface para a classe OneR JAVA). Além disso, vários aprimoramentos foram feitos.
 
 Agora vamos usar o pacote `OneR` e comparar.
 Mas na criação do modelo vamos ignorar a coluna `educarion_level`, essa coluna apenas prejudica o modelo. Em uma versão de teste os resultados foram muito abaixo do esperado.
