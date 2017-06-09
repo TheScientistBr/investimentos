@@ -438,7 +438,7 @@ AUCLog1 <- performance(pred1, measure = 'auc')@y.values[[1]]
 AUCLog1
 ```
 
-    ## [1] 0.7471324
+    ## [1] 0.746522
 
 Esse não é um resultado ruim, mas vamos ver se podemos fazer melhor com um método diferente.
 
@@ -478,7 +478,7 @@ AUCTree <- performance(pred3, measure = 'auc')@y.values[[1]]
 AUCTree
 ```
 
-    ## [1] 0.7115786
+    ## [1] 0.720109
 
 O resultado foi pior do que o anterior. E ambos não são resultados satisfatórios, dada a complexidade do nosso modelo de árvore, então, novamente, temos que nos perguntar se não estamos melhor usando o modelo de Regressão Logística mais simples do primeiro modelo.
 
@@ -508,7 +508,7 @@ AUCRF <- performance(pred4, measure = 'auc')@y.values[[1]]
 AUCRF
 ```
 
-    ## [1] 0.7510963
+    ## [1] 0.7489434
 
 Com o esforço extra, ainda assim não obtemos um resultado um tanto melhorado. O modelo de Regressão logística é o melhor desempenho até o momento.
 
@@ -899,7 +899,7 @@ logLik(modelo.completo)
 logLik(LogisticModel.1)
 ```
 
-    ## 'log Lik.' -795.2899 (df=14)
+    ## 'log Lik.' -787.2288 (df=14)
 
 ``` r
 logLik(LogisticModel.3)
@@ -919,7 +919,7 @@ extractAIC(modelo.completo)
 extractAIC(LogisticModel.1)
 ```
 
-    ## [1]   14.00 1618.58
+    ## [1]   14.000 1602.458
 
 ``` r
 extractAIC(LogisticModel.3)
@@ -949,8 +949,8 @@ anova(LogisticModel.1,LogisticModel.3)
     ##     serasa_commercial_debts + serasa_protests + marital_status + 
     ##     monthly_payment + purpose + education_level
     ##   Resid. Df Resid. Dev Df Deviance
-    ## 1      1234     714.58            
-    ## 2      1234    1370.45  0  -655.87
+    ## 1      1234     694.46            
+    ## 2      1234    1370.45  0  -675.99
 
 Existem diferenças entre os modelos, então ficamos com aquele com mais parâmetros, o modelo 1, o mais complexo, não podemos abandonar ele pelo mais simples, ja que ele explica muita coisa que o modelo 2 mais simples não deu conta de explicar, mas não podemos esquecer que:
 
@@ -1131,15 +1131,15 @@ coefficients(LogisticModel.1) * 20/log(2)
 ```
 
     ##              (Intercept)                      age           monthly_income 
-    ##            -2.958275e+01             2.036554e+01            -5.951529e-01 
+    ##            -2.774151e+01             1.494552e+01            -1.894345e+02 
     ##         collateral_value              loan_amount   collateral_debt_amount 
-    ##             3.774969e+01            -4.555515e+00            -6.483539e+04 
+    ##            -4.699841e+03             5.883479e+00            -8.627714e+04 
     ##       serasa_restriction serasa_dishonored_checks     serasa_expired_debts 
-    ##            -5.950905e+00            -4.307298e+02            -4.542833e+02 
+    ##            -3.823592e+01            -4.079574e+02            -3.336805e+02 
     ##     serasa_banking_debts  serasa_commercial_debts          serasa_protests 
-    ##            -7.476984e+01            -1.834886e+01            -4.270302e+02 
+    ##            -5.952632e+01             6.049834e+00             1.027800e+01 
     ##          monthly_payment                  purpose 
-    ##             9.214073e+01            -5.171327e+00
+    ##             1.212949e+02             7.733364e-01
 
 Uma nova abordagem de um novo modelo
 ------------------------------------
@@ -1293,8 +1293,19 @@ Conclusão
 
 Usamos quatro modelos com os seguintes desempenhos:
 
--------------|-------------------| Modelo | Desempenho
--------------|-------------------| Regressão Logística | 0.75 Árvore de Regressão | 0.71 floresta aleatória | 0.74 Comparação GLM x RF | 0.65 One level decision trees| 0.98
+``` r
+library(knitr)
+myTable <- data.frame(Modelo = c("Regressão Logística", "Árvore de Regressão", "Floresta aleatória", "Comparação GLM x RF", "One level decision trees"), Desemepmnho = c(0.75,0.71, 0.74, 0.65, 0.98))
+kable(myTable)
+```
+
+| Modelo                   |  Desemepmnho|
+|:-------------------------|------------:|
+| Regressão Logística      |         0.75|
+| Árvore de Regressão      |         0.71|
+| Floresta aleatória       |         0.74|
+| Comparação GLM x RF      |         0.65|
+| One level decision trees |         0.98|
 
 Concluimos que o algoritmo `One level decision trees` é o melhor.
 
