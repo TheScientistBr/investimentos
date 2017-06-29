@@ -408,7 +408,7 @@ Normalmente `markdown` não é usado para relatórios longos ou demorados, mas p
 
 
 ```{r VAUC, message=FALSE, warning=FALSE}
-VAUC <- Vectorize(AUC)(1:200)
+VAUC <- Vectorize(AUC)(1:5)
 plot(t(VAUC), xlab = 'Logistic', ylab = 'Random Forest')
 ```
 
@@ -444,7 +444,7 @@ De qualquer maneira que descrevemos nossos resultados, temos que usar os dados p
 
 Estas podem ser as melhores pontuações que podemos encontrar com esses modelos, mas os resultados são aceitáveis para determinar o mérito do credor? Isso depende dos padrões de crédito utilizados pela instituição de crédito.
 
-Na melhor das hipóteses, parece que nossos modelos nos dão 82% de chance de emprestar a bons riscos de crédito. Por cada R\$ 1 milhão em empréstimos, na melhor das hipóteses, podemos esperar que seja reembolsado R\$ 820.000. Em média, esperamos recuperar cerca de R\$ 780 mil em principal. Em outras palavras, de acordo com nossa análise, há entre 75% e 80% de chance de recuperar nosso empréstimo de US R\$ 1 milhão, dependendo do método de modelagem que usamos.
+Na melhor das hipóteses, parece que nossos modelos nos dão 76% de chance de emprestar a bons riscos de crédito. Por cada R\$ 1 milhão em empréstimos, na melhor das hipóteses, podemos esperar que seja reembolsado R\$ 760.000. Em média, esperamos recuperar cerca de R\$ 740 mil em principal. Em outras palavras, de acordo com nossa análise, há entre 75% e 80% de chance de recuperar nosso empréstimo de US R\$ 1 milhão, dependendo do método de modelagem que usamos.
 
 À medida que adicionamos candidatos de empréstimo a nossas bases de dados, gostaríamos que eles se agrupassem na área mais escura do gráfico de alta densidade se considerarmos bons riscos de crédito.
 
@@ -478,6 +478,7 @@ Mais uma vez vamos usar todas as variáveis no modelo.
 
 ```{r warning=FALSE, message=FALSE}
 #Índices obtidos após a aleatorização
+set.seed(1)
 ordena <- sort(sample(nrow(credit), size = dim(credit)[1]*.7))
 
 #Dados para o treinamento
@@ -505,7 +506,7 @@ Após algumas iterações, observa-se que o conjunto de variáveis com o menor v
 summary(stepwise)
 ```
 
-Percebemos que nem todas as variáveis são significativas. Podemos excluir do modelo `serasa_dishonored_checks`, `serasa_dishonored_checks` e todas as outras com p-value maior que $0.05$. 
+Percebemos que nem todas as variáveis são significativas. Podemos excluir do modelo `serasa_dishonored_checks` e todas as outras com p-value maior que $0.05$. 
 
 Uma medida interessante para interpretar o modelo é a medida de Razão de chances (Odds Ratio) que calcula a razão de chances.
 
@@ -607,7 +608,7 @@ library("OneR")
 #ndf[is.na(ndf)] <- 0
 #credit <- subset(credit,credit$monthly_payment != 0)
 #ndf[is.na(ndf)] <- 0
-modelOne <- OneR(sent_to_analysis ~ . , data = credit, verbose = TRUE)
+modelOne <- OneR(sent_to_analysis ~ . , data = credit[i_calibration1,], verbose = TRUE)
 
 ```
 
@@ -629,13 +630,15 @@ plot(modelOne)
 **Usando o modelo para prever dados**
 
 ```{r, message=FALSE, warning=FALSE}
-prediction <- predict(modelOne, credit[,-c(12,15,17)])
+prediction <- predict(modelOne, credit[-i_test1,])
 ```
 
 **Avaliando as estatísticas de previsão**
 
+Vamos tirar a variável `education|_level` para evitar o cálculo cartesiano.
+
 ```{r, message=FALSE, warning=FALSE}
-OLT <- eval_model(prediction, credit[,-c(12,15,17)])
+OLT <- eval_model(prediction, credit[-i_test1,-17])
 OLT
 OLT <- OLT$correct_instances/OLT$total_instances
 ```

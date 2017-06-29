@@ -438,7 +438,7 @@ AUCLog1 <- performance(pred1, measure = 'auc')@y.values[[1]]
 AUCLog1
 ```
 
-    ## [1] 0.7473383
+    ## [1] 0.7453075
 
 Esse não é um resultado ruim, mas vamos ver se podemos fazer melhor com um método diferente.
 
@@ -478,7 +478,7 @@ AUCTree <- performance(pred3, measure = 'auc')@y.values[[1]]
 AUCTree
 ```
 
-    ## [1] 0.7280396
+    ## [1] 0.7196146
 
 O resultado foi pior do que o anterior. E ambos não são resultados satisfatórios, dada a complexidade do nosso modelo de árvore, então, novamente, temos que nos perguntar se não estamos melhor usando o modelo de Regressão Logística mais simples do primeiro modelo.
 
@@ -508,7 +508,7 @@ AUCRF <- performance(pred4, measure = 'auc')@y.values[[1]]
 AUCRF
 ```
 
-    ## [1] 0.7554939
+    ## [1] 0.7462712
 
 Com o esforço extra, ainda assim não obtemos um resultado um tanto melhorado. O modelo de Regressão logística é o melhor desempenho até o momento.
 
@@ -944,7 +944,7 @@ logLik(modelo.completo)
 logLik(LogisticModel.1)
 ```
 
-    ## 'log Lik.' -822.7259 (df=15)
+    ## 'log Lik.' -803.5719 (df=15)
 
 ``` r
 logLik(LogisticModel.3)
@@ -964,7 +964,7 @@ extractAIC(modelo.completo)
 extractAIC(LogisticModel.1)
 ```
 
-    ## [1]   15.000 1675.452
+    ## [1]   15.000 1637.144
 
 ``` r
 extractAIC(LogisticModel.3)
@@ -994,8 +994,8 @@ anova(LogisticModel.1,LogisticModel.3)
     ##     serasa_commercial_debts + serasa_protests + marital_status + 
     ##     cpf_restriction + monthly_payment + purpose + education_level
     ##   Resid. Df Resid. Dev Df Deviance
-    ## 1      1233     723.45            
-    ## 2      1232    1362.96  1   -639.5
+    ## 1      1233     687.14            
+    ## 2      1232    1362.96  1  -675.81
 
 Existem diferenças entre os modelos, então ficamos com aquele com mais parâmetros, o modelo 1, o mais complexo, não podemos abandonar ele pelo mais simples, ja que ele explica muita coisa que o modelo 2 mais simples não deu conta de explicar, mas não podemos esquecer que:
 
@@ -1214,15 +1214,15 @@ coefficients(LogisticModel.1) * 20/log(2)
 ```
 
     ##              (Intercept)                      age           monthly_income 
-    ##               -30.467299                25.559479               -18.563399 
+    ##            -3.539493e+01             2.751826e+01            -1.702993e+02 
     ##         collateral_value              loan_amount   collateral_debt_amount 
-    ##                30.200948                -3.990805            -59430.543876 
+    ##             3.085372e+00             5.523832e+01            -6.741140e+04 
     ##       serasa_restriction serasa_dishonored_checks     serasa_expired_debts 
-    ##                -5.969170              -406.891448                27.533848 
+    ##            -8.002104e+00            -4.041904e+02            -4.051691e+02 
     ##     serasa_banking_debts  serasa_commercial_debts          serasa_protests 
-    ##               -63.488788               -24.362149                 9.462070 
+    ##            -6.400382e+01            -3.521645e+01            -6.991561e-01 
     ##          cpf_restriction          monthly_payment                  purpose 
-    ##               -18.056070                47.626307                 4.173000
+    ##            -1.022171e+01             7.110040e+01             4.530113e+00
 
 Uma nova abordagem de um novo modelo
 ------------------------------------
@@ -1240,27 +1240,24 @@ library("OneR")
 #ndf[is.na(ndf)] <- 0
 #credit <- subset(credit,credit$monthly_payment != 0)
 #ndf[is.na(ndf)] <- 0
-modelOne <- OneR(sent_to_analysis ~ . , data = credit, verbose = TRUE)
+modelOne <- OneR(sent_to_analysis ~ . , data = credit[i_test1,-c(12,15,17)], verbose = TRUE)
 ```
 
     ## 
     ##     Attribute                Accuracy
-    ## 1 * monthly_payment          64.25%  
-    ## 2   loan_amount              64.01%  
-    ## 3   age                      63.98%  
-    ## 3   monthly_income           63.98%  
-    ## 3   collateral_value         63.98%  
-    ## 3   collateral_debt_amount   63.98%  
-    ## 3   serasa_restriction       63.98%  
-    ## 3   serasa_dishonored_checks 63.98%  
-    ## 3   serasa_expired_debts     63.98%  
-    ## 3   serasa_banking_debts     63.98%  
-    ## 3   serasa_commercial_debts  63.98%  
-    ## 3   serasa_protests          63.98%  
-    ## 3   marital_status           63.98%  
-    ## 3   cpf_restriction          63.98%  
-    ## 3   purpose                  63.98%  
-    ## 3   education_level          63.98%  
+    ## 1 * monthly_payment          64.62%  
+    ## 2   loan_amount              64.38%  
+    ## 3   age                      64.34%  
+    ## 3   monthly_income           64.34%  
+    ## 3   collateral_value         64.34%  
+    ## 3   collateral_debt_amount   64.34%  
+    ## 3   serasa_restriction       64.34%  
+    ## 3   serasa_dishonored_checks 64.34%  
+    ## 3   serasa_expired_debts     64.34%  
+    ## 3   serasa_banking_debts     64.34%  
+    ## 3   serasa_commercial_debts  64.34%  
+    ## 3   serasa_protests          64.34%  
+    ## 3   cpf_restriction          64.34%  
     ## ---
     ## Chosen attribute due to accuracy
     ## and ties method (if applicable): '*'
@@ -1273,7 +1270,8 @@ summary(modelOne)
 
     ## 
     ## Call:
-    ## OneR.formula(formula = sent_to_analysis ~ ., data = credit, verbose = TRUE)
+    ## OneR.formula(formula = sent_to_analysis ~ ., data = credit[i_test1, 
+    ##     -c(12, 15, 17)], verbose = TRUE)
     ## 
     ## Rules:
     ## If monthly_payment = (0.0044,0.204] then sent_to_analysis = 0
@@ -1283,24 +1281,24 @@ summary(modelOne)
     ## If monthly_payment = (0.801,1]      then sent_to_analysis = 0
     ## 
     ## Accuracy:
-    ## 2672 of 4159 instances classified correctly (64.25%)
+    ## 1881 of 2911 instances classified correctly (64.62%)
     ## 
     ## Contingency table:
     ##                 monthly_payment
     ## sent_to_analysis (0.0044,0.204] (0.204,0.403] (0.403,0.602] (0.602,0.801]
-    ##              0           * 2632            28             0             0
-    ##              1             1459          * 30           * 8           * 1
-    ##              Sum           4091            58             8             1
+    ##              0           * 1854            18             0             0
+    ##              1             1012          * 20           * 5           * 1
+    ##              Sum           2866            38             5             1
     ##                 monthly_payment
     ## sent_to_analysis (0.801,1]  Sum
-    ##              0         * 1 2661
-    ##              1           0 1498
-    ##              Sum         1 4159
+    ##              0         * 1 1873
+    ##              1           0 1038
+    ##              Sum         1 2911
     ## ---
     ## Maximum in each column: '*'
     ## 
     ## Pearson's Chi-squared test:
-    ## X-squared = 22.982, df = 4, p-value = 0.0001277
+    ## X-squared = 16.303, df = 4, p-value = 0.002638
 
 Agora sim temos um modelo mais performático.
 
@@ -1315,54 +1313,54 @@ plot(modelOne)
 **Usando o modelo para prever dados**
 
 ``` r
-prediction <- predict(modelOne, credit[,-c(12,15,17)])
+prediction <- predict(modelOne, credit[-i_test1,-c(12,15,17)])
 ```
 
 **Avaliando as estatísticas de previsão**
 
 ``` r
-OLT <- eval_model(prediction, credit[,-c(12,15,17)])
+OLT <- eval_model(prediction, credit[-i_test1,-c(12,15,17)])
 ```
 
     ## 
     ## Confusion matrix (absolute):
     ##           Actual
     ## Prediction    0    1  Sum
-    ##        0   2633 1459 4092
-    ##        1     28   39   67
-    ##        Sum 2661 1498 4159
+    ##        0    778  447 1225
+    ##        1     10   13   23
+    ##        Sum  788  460 1248
     ## 
     ## Confusion matrix (relative):
     ##           Actual
     ## Prediction    0    1  Sum
-    ##        0   0.63 0.35 0.98
+    ##        0   0.62 0.36 0.98
     ##        1   0.01 0.01 0.02
-    ##        Sum 0.64 0.36 1.00
+    ##        Sum 0.63 0.37 1.00
     ## 
     ## Accuracy:
-    ## 0.6425 (2672/4159)
+    ## 0.6338 (791/1248)
     ## 
     ## Error rate:
-    ## 0.3575 (1487/4159)
+    ## 0.3662 (457/1248)
     ## 
     ## Error rate reduction (vs. base rate):
-    ## 0.0073 (p-value = 0.3677)
+    ## 0.0065 (p-value = 0.4427)
 
 ``` r
 OLT
 ```
 
     ## $correct_instances
-    ## [1] 2672
+    ## [1] 791
     ## 
     ## $total_instances
-    ## [1] 4159
+    ## [1] 1248
     ## 
     ## $conf_matrix
     ##           Actual
-    ## Prediction    0    1
-    ##          0 2633 1459
-    ##          1   28   39
+    ## Prediction   0   1
+    ##          0 778 447
+    ##          1  10  13
 
 ``` r
 OLT <- OLT$correct_instances/OLT$total_instances
@@ -1377,11 +1375,11 @@ Usamos quatro modelos, e uma comparação entre eles, com os seguintes desempenh
 
 | Algoritmo                |  Desempenho|
 |:-------------------------|-----------:|
-| Regressão Logística      |   0.7473383|
-| Árvore de Regressão      |   0.7280396|
-| Floresta aleatória       |   0.7554939|
+| Regressão Logística      |   0.7453075|
+| Árvore de Regressão      |   0.7196146|
+| Floresta aleatória       |   0.7462712|
 | Comparação GLM x RF      |   0.6394231|
-| One level decision trees |   0.6424621|
+| One level decision trees |   0.6338141|
 
 Concluimos que o algoritmo `Regressão Logística` tem uma melhor adaptação a esses dados, mostrando resultados melhores. O mesmo para `Random Forest`. Recomenda-se usar ambos até que a distância de desempenho se justifique. Ao longo do tempo as avaliações podem passar por prova de hipótese para certificar estatisticamente o poder.
 
